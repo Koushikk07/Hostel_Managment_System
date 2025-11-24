@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Hostel Room Management</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.0/css/bootstrap.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <style>
+    .roll-input { width: 100px; display:inline-block; }
+    .btn-small { padding: 2px 6px; font-size: 12px; }
+    th, td { vertical-align: middle !important; }
+  </style>
+</head>
+<body>
+<div class="container mt-4">
+  <h2>Hostel Room Management</h2>
+
+  <!-- Add Room Form -->
+  <h4>Add Room</h4>
+  <form id="addRoomForm" class="row g-2 mb-4">
+    <div class="col-md-2">
+      <select id="newHostel" class="form-select" required>
+       
+      </select>
+    </div>
+    <div class="col-md-2">
+      <input type="text" id="newRoomNo" placeholder="Room No" class="form-control" required>
+    </div>
+    <div class="col-md-2">
+      <select id="newFloor" class="form-select" required>
+        <option value="">Floor</option>
+        <option value="Ground">Ground</option>
+        <option value="First">First</option>
+        <option value="Second">Second</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <select id="newCategory" class="form-select">
+        <option value="Boys">Boys</option>
+        <option value="Girls">Girls</option>
+        <option value="Staff">Staff</option>
+        <option value="Guest">Guest</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <input type="number" id="newCapacity" placeholder="Capacity" class="form-control" min="1">
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-success w-100">Add Room</button>
+    </div>
+  </form> <!-- ✅ closed properly -->
+
+  <h2>Hostel Rooms Details</h2>
+
+  <!-- Filters -->
+  <div class="row mb-3">
+    <div class="col-md-3">
+      <label>Hostel:</label>
+      <select id="hostelSelect" class="form-select">
+        <option value="all">All</option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label>Floor:</label>
+      <select id="floorSelect" class="form-select">
+        <option value="all">All</option>
+        <option value="Ground">Ground</option>
+        <option value="First">First</option>
+        <option value="Second">Second</option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label>Search Roll No:</label>
+      <input type="text" id="searchRoll" class="form-control" placeholder="Roll No">
+    </div>
+    <div class="col-md-3 mt-4">
+      <button class="btn btn-primary mt-2" onclick="loadRooms()">Load Rooms</button>
+    </div>
+  </div>
+
+  <!-- Rooms Table -->
+  <table class="table table-bordered" id="roomsTable">
+    <thead>
+      <tr>
+        <th>Hostel Name</th>
+        <th>Room No</th>
+        <th>Category</th>
+        <th>Capacity</th>
+        <th>Current Occupants</th>
+        <th>Occupants Roll No</th>
+        <th>Remaining</th>
+        <th>Update Capacity</th>
+        <th>Allocate Student</th>
+        <th>Vacate Student</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<script>
+// Load all hostels dynamically
+async function loadHostels() {
+  try {
+    const res = await axios.get("/admin/api/rooms");
+    const hostels = [...new Set(res.data.rooms.map(r => r.hostel_name))];
+    const hostelSelect = document.getElementById("hostelSelect");
+    hostelSelect.innerHTML = '<option value="all">All</option>';
+    const newHostel = document.getElementById("newHostel");
+    newHostel.innerHTML = '';
+    hostels.forEach(h => {
+      hostelSelect.innerHTML += `<option value="${h}">${h}</option>`;
+      newHostel.innerHTML += `<option value="${h}">${h}</option>`;
+    });
+  } catch (err) { console.error(err); }
+}
+loadHostels();
+
+// Load rooms with filters
+async function loadRooms() {
+  const hostel = document.getElementById("hostelSelect").value;
+  const floor = document.getElementById("floorSelect").value;
+  const roll_no = document.getElementById("searchRoll").value.trim();
+  try {
+    const res = await axios.get("/admin/api/rooms", {
+      params: { hostel_name: hostel, floor: floor, roll_no: roll_no || undefined }
+    });
+    const tbody = document.querySelector("#roomsTable tbody");
+    tbody.innerHTML = '';
+    res.data.rooms.forEach(r => {
+      tbody.innerHTML += `
+        <tr>
+          <td>${r.hostel_name}</td>
+          <td>${r.room_no}</td>
+          <td>${r.category}</td>
+          <td>${r.capacity}</td>
+          <td>${r.current_occupants}</td>
+          <td>${r.occupants_rolls.join(", ")}</td>
+          <td>${r.remaining}</td>
+          <td><input type="number" value="${r.capacity}" min="1" style="width:60px" onchange="updateCapacity(${r.id}, this.value)"></td>
+          <td>
+            <input type="text" class="roll-input" placeholder="Roll No" id="allocate_${r.id}">
+            <button class="btn btn-primary btn-small" onclick="allocateStudent(${r.id})">Allocate</button>
+          </td>
+          <td>
+            <input type="text" class="roll-input" placeholder="Roll No" id="vacate_${r.id}">
+            <button class="btn btn-warning btn-small" onclick="vacateStudent(${r.id})">Vacate</button>
+          </td>
+          <td><button class="btn btn-danger btn-sm" onclick="deleteRoom(${r.id})">Deactivate</button></td>
+        </tr>
+      `;
+    });
+  } catch(err){ console.error(err); }
+}
+
+// Update capacity
+async function updateCapacity(roomId, capacity) {
+  try {
+    await axios.post(`/admin/api/rooms/update/${roomId}`, {capacity});
+    loadRooms();
+  } catch(err){ console.error(err); }
+}
+
+// Allocate student
+async function allocateStudent(roomId) {
+  const roll_no = document.getElementById(`allocate_${roomId}`).value.trim();
+  if(!roll_no) return alert("Enter roll number");
+  try {
+    await axios.post("/admin/api/allocate", {roll_no, room_id: roomId});
+    loadRooms();
+  } catch(err){ alert(err.response.data.message); console.error(err); }
+}
+
+// Vacate student
+async function vacateStudent(roomId) {
+  const roll_no = document.getElementById(`vacate_${roomId}`).value.trim();
+  if(!roll_no) return alert("Enter roll number");
+  try {
+    await axios.post("/admin/api/allocate/vacate", {roll_no, room_id: roomId});
+    loadRooms();
+  } catch(err){ alert(err.response.data.message); console.error(err); }
+}
+
+// Delete room
+async function deleteRoom(roomId) {
+  if(!confirm("Are you sure?")) return;
+  try {
+    await axios.post(`/admin/api/rooms/delete/${roomId}`);
+    loadRooms();
+  } catch(err){ console.error(err); }
+}
+
+// Add room
+document.getElementById("addRoomForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const hostel_name = document.getElementById("newHostel").value;
+  const room_no = document.getElementById("newRoomNo").value.trim();
+  const floor = document.getElementById("newFloor").value;
+  const category = document.getElementById("newCategory").value;
+  const capacity = document.getElementById("newCapacity").value;
+  if(!hostel_name || !room_no || !floor || !capacity) return alert("Fill all required fields");
+  try {
+    await axios.post("/admin/api/rooms/add", {hostel_name, room_no, floor, category, capacity});
+    loadRooms();
+  } catch(err){ console.error(err); }
+});
+</script>
+</body>
+</html>

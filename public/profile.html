@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Profile</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f5f5f5;margin:0;padding:0}
+header{background:#007bff;color:#fff;padding:16px;text-align:center}
+table{border-collapse:collapse;width:100%;margin:16px 0}
+th,td{border:1px solid #ccc;padding:8px;text-align:left}
+th{background:#007bff;color:#fff}
+</style>
+</head>
+<body>
+<header><h1>Profile Details</h1></header>
+<main>
+<div id="profile-container">Loading...</div>
+</main>
+
+<script>
+async function loadProfile(){
+  try {
+    const res = await fetch("/student/profile");
+    const data = await res.json();
+    if(!data.success) throw new Error("Profile not found");
+
+    const p = data.student;
+    const roomRes = await fetch("/api/students/" + p.roll_no);
+    const room = await roomRes.json();
+
+    document.getElementById("profile-container").innerHTML = `
+      <table>
+        <tr><th>Full Name</th><td>${p.name}</td></tr>
+        <tr><th>Roll No</th><td>${p.roll_no}</td></tr>
+        <tr><th>Email</th><td>${p.email}</td></tr>
+        <tr><th>Phone</th><td>${p.phone}</td></tr>
+        <tr><th>Course</th><td>${p.course || "-"}</td></tr>
+        <tr><th>Branch</th><td>${p.branch || "-"}</td></tr>
+        <tr><th>Year</th><td>${p.year || "-"}</td></tr>
+        <tr><th>Hostel</th><td>${room.hostel_name || "-"}</td></tr>
+        <tr><th>Room No</th><td>${room.room_no || "-"}</td></tr>
+      </table>
+    `;
+  } catch(err){
+    document.getElementById("profile-container").innerHTML = "Error loading profile.";
+  }
+}
+
+loadProfile();
+</script>
+</body>
+</html>

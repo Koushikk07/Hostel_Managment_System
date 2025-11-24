@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Students Report</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body class="p-3">
+<h2>Students Report</h2>
+
+<div class="row mb-3">
+  <div class="col-md-3"><input type="text" id="searchInput" class="form-control" placeholder="Search by name or roll"></div>
+  <div class="col-md-3"><input type="text" id="branchFilter" class="form-control" placeholder="Branch"></div>
+  <div class="col-md-3"><input type="number" id="yearFilter" class="form-control" placeholder="Year"></div>
+  <div class="col-md-3 text-end">
+    <button class="btn btn-primary" onclick="loadStudents()">Search</button>
+    <button class="btn btn-success" onclick="exportCSV()">Export CSV</button>
+  </div>
+</div>
+
+<table class="table table-bordered" id="studentsTable">
+  <thead>
+    <tr>
+      <th>Roll No</th>
+      <th>Name</th>
+      <th>Branch</th>
+      <th>Year</th>
+      <th>Course</th>
+      <th>Gender</th>
+      <th>Hostel</th>
+      <th>Room</th>
+      <th>Approval</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<script>
+let studentsData = [];
+
+async function loadStudents() {
+  const res = await axios.get("/api/students");
+  studentsData = res.data;
+
+  const search = document.getElementById("searchInput").value.toLowerCase();
+  const branch = document.getElementById("branchFilter").value.toLowerCase();
+  const year = document.getElementById("yearFilter").value;
+
+  const filtered = studentsData.filter(s => 
+    (!search || s.full_name.toLowerCase().includes(search) || s.roll_no.toLowerCase().includes(search)) &&
+    (!branch || (s.branch && s.branch.toLowerCase().includes(branch))) &&
+    (!year || s.year == year)
+  );
+  renderStudents(filtered);
+}
+
+function renderStudents(data) {
+  const tbody = document.querySelector("#studentsTable tbody");
+  tbody.innerHTML = "";
+  data.forEach(s => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${s.roll_no}</td>
+        <td>${s.full_name}</td>
+        <td>${s.branch||''}</td>
+        <td>${s.year||''}</td>
+        <td>${s.course||''}</td>
+        <td>${s.gender||''}</td>
+        <td>${s.hostel_name||''}</td>
+        <td>${s.room_no||''}</td>
+        <td>${s.approval_status||''}</td>
+      </tr>`;
+  });
+}
+
+function exportCSV() {
+  let csv = "Roll No,Name,Branch,Year,Course,Gender,Hostel,Room,Approval\n";
+  studentsData.forEach(s => {
+    csv += `${s.roll_no},${s.full_name},${s.branch||''},${s.year||''},${s.course||''},${s.gender||''},${s.hostel_name||''},${s.room_no||''},${s.approval_status||''}\n`;
+  });
+  const blob = new Blob([csv], {type:"text/csv"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "students_report.csv";
+  a.click();
+}
+loadStudents();
+</script>
+</body>
+</html>

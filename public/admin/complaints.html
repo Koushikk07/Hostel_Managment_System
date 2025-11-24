@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Complaint Management - Admin</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f8fc;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+
+    header {
+      background: #0066cc;
+      color: white;
+      padding: 15px;
+      text-align: center;
+      font-size: 22px;
+      font-weight: bold;
+    }
+
+    .container {
+      width: 90%;
+      margin: 20px auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0px 2px 8px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      color: #0066cc;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    table th, table td {
+      padding: 10px;
+      border: 1px solid #ddd;
+      text-align: center;
+    }
+
+    table th {
+      background: #0066cc;
+      color: white;
+    }
+
+    .btn {
+      padding: 6px 12px;
+      margin: 2px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .btn-add {
+      background: #0066cc;
+      color: white;
+    }
+
+    .btn-edit {
+      background: #0099ff;
+      color: white;
+    }
+
+    .btn-delete {
+      background: #ff3333;
+      color: white;
+    }
+
+    .btn-status {
+      background: #00cc66;
+      color: white;
+    }
+
+    .form-popup {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0px 5px 15px rgba(0,0,0,0.3);
+      width: 400px;
+      z-index: 10;
+    }
+
+    .form-popup h3 {
+      margin-top: 0;
+      color: #0066cc;
+    }
+
+    .form-popup input, .form-popup textarea, .form-popup select {
+      width: 100%;
+      padding: 8px;
+      margin: 6px 0;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    .form-popup .btn {
+      width: 48%;
+    }
+
+    .overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.4);
+      z-index: 5;
+    }
+  </style>
+</head>
+<body>
+  <header>Complaint Management - Admin</header>
+
+  <div class="container">
+    <button class="btn btn-add" onclick="openForm()">+ Add Complaint</button>
+
+    <h2>All Complaints</h2>
+    <table id="complaintsTable">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Student ID</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Status</th>
+          <th>Created At</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Complaints will load here dynamically -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Popup Form -->
+  <div class="overlay" id="overlay"></div>
+  <div class="form-popup" id="complaintForm">
+    <h3>Add Complaint</h3>
+    <form id="addComplaintForm">
+      <input type="number" name="student_id" placeholder="Student ID" required>
+      <input type="text" name="complaint_type" placeholder="Complaint Type" required>
+      <textarea name="description" placeholder="Complaint Description" required></textarea>
+      <br>
+      <button type="submit" class="btn btn-add">Submit</button>
+      <button type="button" class="btn btn-delete" onclick="closeForm()">Cancel</button>
+    </form>
+  </div>
+
+  <script>
+    const tableBody = document.querySelector("#complaintsTable tbody");
+
+    async function fetchComplaints() {
+      const res = await fetch("/api/complaints");
+      const complaints = await res.json();
+      tableBody.innerHTML = "";
+      complaints.forEach(c => {
+        const row = `
+          <tr>
+            <td>${c.complaint_id}</td>
+            <td>${c.student_id}</td>
+            <td>${c.complaint_type}</td>
+            <td>${c.description}</td>
+            <td>${c.status}</td>
+            <td>${new Date(c.created_at).toLocaleString()}</td>
+            <td>
+              <button class="btn btn-status" onclick="updateStatus(${c.complaint_id}, 'In Progress')">In Progress</button>
+              <button class="btn btn-status" onclick="updateStatus(${c.complaint_id}, 'Resolved')">Resolve</button>
+              <button class="btn btn-delete" onclick="deleteComplaint(${c.complaint_id})">Delete</button>
+            </td>
+          </tr>
+        `;
+        tableBody.innerHTML += row;
+      });
+    }
+
+    async function updateStatus(id, status) {
+      await fetch(`/api/complaints/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status })
+      });
+      fetchComplaints();
+    }
+
+    async function deleteComplaint(id) {
+      if (!confirm("Are you sure to delete this complaint?")) return;
+      await fetch(`/api/complaints/${id}`, { method: "DELETE" });
+      fetchComplaints();
+    }
+
+    document.getElementById("addComplaintForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData.entries());
+      await fetch("/api/complaints", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+      closeForm();
+      fetchComplaints();
+    });
+
+    function openForm() {
+      document.getElementById("complaintForm").style.display = "block";
+      document.getElementById("overlay").style.display = "block";
+    }
+
+    function closeForm() {
+      document.getElementById("complaintForm").style.display = "none";
+      document.getElementById("overlay").style.display = "none";
+    }
+
+    fetchComplaints();
+  </script>
+</body>
+</html>

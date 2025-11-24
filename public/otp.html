@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>OTP Verification</title>
+<style>
+input{width:40px;font-size:20px;text-align:center;margin:5px;}
+</style>
+</head>
+<body>
+<h2>Enter OTP</h2>
+<div id="otpInputs">
+  <input maxlength="1"><input maxlength="1"><input maxlength="1">
+  <input maxlength="1"><input maxlength="1"><input maxlength="1">
+</div>
+<button id="submitBtn">Verify OTP</button>
+<p id="error"></p>
+
+<script>
+const inputs = document.querySelectorAll('#otpInputs input');
+const submitBtn = document.getElementById('submitBtn');
+const errorMsg = document.getElementById('error');
+
+inputs.forEach((input, i) => {
+  input.addEventListener('input', () => {
+    if(input.value.length && i < inputs.length-1) inputs[i+1].focus();
+  });
+});
+
+submitBtn.addEventListener('click', async () => {
+  const otp = Array.from(inputs).map(i=>i.value).join('');
+  if(otp.length<6){ errorMsg.textContent="Enter all 6 digits"; return; }
+
+  const email = sessionStorage.getItem('otpEmail');
+  const res = await fetch('/login/verify-otp',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ email, otp })
+  });
+  const data = await res.json();
+  if(data.success) window.location.href = data.redirect;
+  else errorMsg.textContent = data.error;
+});
+</script>
+</body>
+</html>

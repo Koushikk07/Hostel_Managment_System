@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Registration</title>
+  <style>
+    body {background:linear-gradient(135deg,#6a11cb,#2575fc);min-height:100vh;display:flex;justify-content:center;align-items:center;}
+    .container {background:#fff;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,0.2);max-width:500px;width:100%;overflow:hidden;}
+    .header {background:#4a6fc7;color:#fff;padding:20px;text-align:center;}
+    .form-container {padding:30px;}
+    .form-group{margin-bottom:15px;}
+    label{display:block;margin-bottom:6px;font-weight:600;}
+    input{width:100%;padding:10px;border:1px solid #ddd;border-radius:5px;}
+    .error{color:red;font-size:13px;display:none;}
+    button{background:#4a6fc7;color:white;border:none;padding:12px;width:100%;border-radius:5px;font-weight:bold;cursor:pointer;}
+    button:hover{background:#3b5aa6;}
+    .login-link{text-align:center;margin-top:10px;}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header"><h2>User Registration</h2></div>
+    <div class="form-container">
+      <form id="registerForm">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" name="full_name" required>
+        </div>
+        <div class="form-group">
+          <label>Roll Number</label>
+          <input type="text" name="roll_no" pattern="^[0-9]+$" title="Only numbers allowed" required>
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" name="email" required>
+        </div>
+        <div class="form-group">
+          <label>Phone</label>
+          <input type="tel" name="phone" pattern="^[0-9]{10}$" title="Enter 10 digit number" required>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="password" name="password" required>
+          <small>Password must be ≥8 chars and include uppercase, lowercase, number & symbol</small>
+        </div>
+        <div class="form-group">
+          <label>Confirm Password</label>
+          <input type="password" id="confirmPassword" required>
+          <div class="error" id="confirmError">Passwords do not match</div>
+        </div>
+        <button type="submit">Register</button>
+      </form>
+      <div class="login-link">Already registered? <a href="login.html">Login</a></div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById("registerForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+
+      const pass = document.getElementById("password").value;
+      const confirm = document.getElementById("confirmPassword").value;
+
+      // Password pattern
+      const passPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+      if (!passPattern.test(pass)) {
+        alert("Password must be ≥8 chars, include uppercase, lowercase, number & special char.");
+        return;
+      }
+      if (pass !== confirm) {
+        document.getElementById("confirmError").style.display = "block";
+        return;
+      } else {
+        document.getElementById("confirmError").style.display = "none";
+      }
+
+      const formData = new FormData(this);
+      const data = Object.fromEntries(formData.entries());
+
+      try {
+        const res = await fetch("/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        });
+        const result = await res.json();
+        if (result.success) {
+          alert("Registration successful!");
+          window.location.href = "/"; // redirect to login
+        } else {
+          alert(result.message || "Registration failed");
+        }
+      } catch (err) {
+        alert("Error: " + err.message);
+      }
+    });
+  </script>
+</body>
+</html>

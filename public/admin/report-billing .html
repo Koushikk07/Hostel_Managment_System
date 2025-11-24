@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Billing Report</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body class="p-3">
+<h2>Billing Report</h2>
+
+<div class="mb-3 text-end">
+  <button class="btn btn-success" onclick="exportCSV()">Export CSV</button>
+</div>
+
+<table class="table table-bordered" id="billingTable">
+  <thead>
+    <tr>
+      <th>Roll No</th>
+      <th>Name</th>
+      <th>Academic Year</th>
+      <th>Total Fee</th>
+      <th>Total Paid</th>
+      <th>Scholarship</th>
+      <th>Due</th>
+      <th>Remaining</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<script>
+let billingData = [];
+
+async function loadBilling() {
+  const res = await axios.get("/admin/api/billing-summary");
+  billingData = res.data.rows;
+  renderTable();
+}
+
+function renderTable() {
+  const tbody = document.querySelector("#billingTable tbody");
+  tbody.innerHTML = "";
+  billingData.forEach(r => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${r.roll_no}</td>
+        <td>${r.name}</td>
+        <td>${r.academic_year}</td>
+        <td>${r.total_fee}</td>
+        <td>${r.total_paid}</td>
+        <td>${r.total_scholarship}</td>
+        <td>${r.due}</td>
+        <td>${r.remaining}</td>
+      </tr>`;
+  });
+}
+
+function exportCSV() {
+  let csv = "Roll No,Name,Academic Year,Total Fee,Total Paid,Scholarship,Due,Remaining\n";
+  billingData.forEach(r=>{
+    csv += `${r.roll_no},${r.name},${r.academic_year},${r.total_fee},${r.total_paid},${r.total_scholarship},${r.due},${r.remaining}\n`;
+  });
+  const blob = new Blob([csv], {type:"text/csv"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "billing_report.csv";
+  a.click();
+}
+loadBilling();
+</script>
+</body>
+</html>

@@ -1,0 +1,121 @@
+    
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Applications Dashboard</title>
+<style>
+body { font-family: Arial, sans-serif; background: #f5f5f5; margin:0; padding:0; }
+header { background:#007bff; color:#fff; padding:16px; text-align:center; }
+h1 { margin:0; font-size:24px; }
+main { padding:24px; }
+.filter-buttons { margin-bottom:16px; display:flex; gap:8px; flex-wrap:wrap; }
+.filter-buttons button { padding:8px 16px; border:none; border-radius:6px; cursor:pointer; background:#007bff; color:#fff; transition:0.2s; }
+.filter-buttons button.active { background:#0056b3; }
+table { width:100%; border-collapse:collapse; background:#fff; box-shadow:0 2px 6px rgba(0,0,0,0.1); margin-top:16px; }
+th, td { border:1px solid #ddd; padding:8px; text-align:center; }
+th { background:#007bff; color:#fff; }
+tr:hover { background:#f1f1f1; }
+button { transition:0.2s; }
+button:hover { opacity:0.9; }
+.view-btn { background:#17a2b8; color:#fff; }
+.approve-btn { background:#28a745; color:#fff; }
+.reject-btn { background:#dc3545; color:#fff; }
+</style>
+</head>
+<body>
+<header><h1>Applications Dashboard</h1></header>
+<main>
+  <h2 id="pageTitle">All Applications</h2>
+  <div class="filter-buttons" id="filterButtons"></div>
+  <div id="appContainer">Loading...</div>
+</main>
+
+<script>
+let currentFilter = 'All';
+const filters = ['All','Pending','Approved','Rejected'];
+
+async function fetchApplications() {
+  try {
+    const res = await fetch('/admin/applications');
+    const data = await res.json();
+    return data.success ? data.applications : [];
+  } catch(err) { console.error(err); return []; }
+}
+
+async function loadApplications(filter='All') {
+  currentFilter = filter;
+  document.getElementById('pageTitle').innerText = filter + ' Applications';
+  const appContainer = document.getElementById('appContainer');
+  const apps = await fetchApplications();
+  let filtered = apps;
+  if(filter !== 'All') filtered = apps.filter(a => a.approval_status === filter);
+
+  // Buttons
+  document.getElementById('filterButtons').innerHTML = filters.map(f => 
+    `<button class="${f===filter?'active':''}" onclick="loadApplications('${f}')">${f}</button>`
+  ).join('');
+
+  if(filtered.length===0) { appContainer.innerHTML='<p>No applications found.</p>'; return; }
+
+  // Table
+  let html = '<table><thead><tr>' +
+             '<th>ID</th><th>Roll No</th><th>Name</th><th>Course</th><th>Branch</th>' +
+             '<th>Year</th><th>Gender</th><th>Food</th><th>Type</th><th>Approval</th><th>Actions</th></tr></thead><tbody>';
+
+  filtered.forEach(a=>{
+    html += `<tr>
+      <td>${a.application_id}</td>
+      <td>${a.roll_no}</td>
+      <td>${a.full_name}</td>
+      <td>${a.course||'-'}</td>
+      <td>${a.branch||'-'}</td>
+      <td>${a.year||'-'}</td>
+      <td>${a.gender||'-'}</td>
+      <td>${a.food_preference||'-'}</td>
+      <td>${a.application_type||'-'}</td>
+      <td>${a.approval_status}</td>
+      <td>
+        <button class="view-btn" onclick="viewApplication(${a.application_id})">View</button>
+        ${a.approval_status==='Pending' ? 
+          `<button class="approve-btn" onclick="approveApplication(${a.application_id})">Approve</button>
+           <button class="reject-btn" onclick="rejectApplication(${a.application_id})">Reject</button>` : ''}
+      </td>
+    </tr>`;
+  });
+
+  html += '</tbody></table>';
+  appContainer.innerHTML = html;
+}
+
+// View full details
+function viewApplication(id) { window.location.href = `application-details.html?id=${id}`; }
+
+// Approve
+async function approveApplication(id) {
+  const payment = prompt("Enter payment amount (optional)","0");
+  const res = await fetch(`/admin/applications/${id}/approve`,{
+    method:'POST', headers:{'Content-Type':'application/json'}, 
+    body:JSON.stringify({payment: parseFloat(payment)||0})
+  });
+  const data = await res.json();
+  alert(data.message); loadApplications(currentFilter);
+}
+
+// Reject
+async function rejectApplication(id) {
+  const reason = prompt("Enter rejection reason:");
+  if(!reason) return alert("Rejection reason required");
+  const res = await fetch(`/admin/applications/${id}/reject`,{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({reason})
+  });
+  const data = await res.json();
+  alert(data.message); loadApplications(currentFilter);
+}
+
+window.onload = ()=>loadApplications('All');
+</script>
+</body>
+</html>

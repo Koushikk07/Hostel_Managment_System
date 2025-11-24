@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Billing Summary</title>
+<style>
+body{font-family:Arial,sans-serif;margin:12px;background:#fafafa}
+h2{margin-bottom:12px}   
+.button{background:#007bff;color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;margin-right:6px}
+.button.secondary{background:#6c757d}
+table{width:100%;border-collapse:collapse;background:#fff;margin-top:12px}
+th,td{padding:8px;border:1px solid #ddd;text-align:center}
+th{background:#007bff;color:#fff}
+.small{padding:4px 8px;font-size:13px;border-radius:6px;cursor:pointer}
+.due{color:#c82333;font-weight:bold}
+.remaining{color:#218838;font-weight:bold}
+
+/* Modal */
+.modal{display:none;position:fixed;z-index:10;left:0;top:0;width:100%;height:100%;overflow:auto;background:rgba(0,0,0,0.4);}
+.modal-content{background:#fff;margin:5% auto;padding:20px;border-radius:8px;max-width:500px;position:relative;}
+.modal-header{font-weight:bold;margin-bottom:12px;font-size:18px;}
+.close{position:absolute;top:8px;right:12px;font-size:22px;font-weight:bold;color:#333;cursor:pointer;}
+.modal input, .modal select{width:100%;padding:6px;margin:4px 0 10px 0;border:1px solid #ccc;border-radius:4px;}
+.modal label{font-weight:bold;}
+.modal-footer{text-align:right;}
+</style>
+</head>
+<body>
+<h2>Billing Summary</h2>
+<button class="button" onclick="loadBilling()">Reload All</button>
+<button class="button" onclick="openModal()">Add Billing</button>
+<input id="searchInput" type="text" placeholder="Search by roll or name" style="margin-left:8px;padding:8px;border-radius:6px;border:1px solid #ccc" oninput="debouncedSearch()">
+
+<div id="tableWrap">
+  <table id="billingTable">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Roll No</th>
+        <th>Name</th>
+        <th>Total Fee</th>
+        <th>Total Paid</th>
+        <th>Total Scholarship</th>
+        <th>Due</th>
+        <th>Remaining</th>
+        <th>Academic Year</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<!-- Modal for Add Billing -->
+<div id="billingModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeModal()">&times;</span>
+    <div class="modal-header">Add Billing</div>
+    <label>Roll No</label>
+    <input type="text" id="modalRollNo" placeholder="Enter Roll No" onblur="lookupStudent()">
+    <label>Name</label>
+    <input type="text" id="modalName" placeholder="Student Name">
+    <label>Room No</label>
+    <input type="text" id="modalRoomNo" placeholder="Room No">
+    <label>Hostel</label>
+    <input type="text" id="modalHostelName" placeholder="Hostel Name">
+    <label>Hostel Fee</label>
+    <input type="number" id="modalHostelFee" value="0">
+    <label>Monthly Fee</label>
+    <input type="number" id="modalMonthlyFee" value="0">
+    <label>Paid Amount</label>
+    <input type="number" id="modalPaidAmount" value="0">
+    <label>Scholarship</label>
+    <input type="number" id="modalScholarship" value="0">
+    <label>Food Preference</label>
+    <select id="modalFoodPref">
+      <option value="Veg" selected>Veg</option>
+      <option value="Non-Veg">Non-Veg</option>
+    </select>
+    <label>Month</label>
+    <input type="text" id="modalMonth" placeholder="e.g., Jan or January">
+    <label>Academic Year</label>
+    <input type="text" id="modalAcademicYear" placeholder="e.g., 2025-2026">
+    <div class="modal-footer">
+      <button class="button secondary" onclick="closeModal()">Cancel</button>
+      <button class="button" onclick="saveBilling()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let allRows = [], searchTimer = null;
+
+async function loadBilling(){
+  try{
+    const res = await fetch('/admin/api/billing-summary');
+    const data = await res.json();
+    if(!data.success) return alert('Failed to load billing summary');
+    allRows=data.rows||[];
+    renderTable(allRows);
+  }catch(err){console.error(err);}
+}
+
+function renderTable(rows){
+  const tbody=document.querySelector('#billingTable tbody');
+  tbody.innerHTML='';
+  if(!rows.length){ 
+    tbody.innerHTML='<tr><td colspan="10">No records</td></tr>'; 
+    return; 
+  }
+  rows.forEach((r,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td>${i+1}</td>
+      <td>${r.roll_no||'-'}</td>
+      <td>${r.name||'-'}</td>
+      <td>${r.total_fee||'-'}</td>
+      <td>${r.total_paid||'-'}</td>
+      <td>${r.total_scholarship||'-'}</td>
+      <td class="${r.due && r.due !== '-' ? 'due' : ''}">${r.due||'-'}</td>
+      <td class="${r.remaining && r.remaining !== '-' ? 'remaining' : ''}">${r.remaining||'-'}</td>
+      <td>${r.academic_year||'-'}</td>
+      <td><button class="small" onclick="window.location.href='/admin/billing-manage?roll_no=${r.roll_no}'">Open</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function debouncedSearch(){
+  clearTimeout(searchTimer);
+  searchTimer=setTimeout(()=>{
+    const q=document.getElementById('searchInput').value.trim().toLowerCase();
+    renderTable(
+      q
+        ? allRows.filter(r=>
+            (r.roll_no||'').toLowerCase().includes(q) ||
+            (r.name||'').toLowerCase().includes(q))
+        : allRows
+    );
+  },200);
+}
+
+// Modal Functions
+function openModal(){
+  document.getElementById('billingModal').style.display='block';
+  clearModalFields();
+}
+
+function closeModal(){
+  document.getElementById('billingModal').style.display='none';
+}
+
+function clearModalFields(){
+  ['modalRollNo','modalName','modalRoomNo','modalHostelName','modalHostelFee','modalMonthlyFee','modalPaidAmount','modalScholarship','modalMonth','modalAcademicYear'].forEach(id=>{
+    document.getElementById(id).value='';
+  });
+  document.getElementById('modalFoodPref').value='Veg';
+}
+
+// Lookup student by Roll No
+async function lookupStudent(){
+  const rollNo = document.getElementById('modalRollNo').value.trim();
+  if(!rollNo) return;
+  try{
+    const res = await fetch(`/admin/api/student-lookup?roll_no=${rollNo}`);
+    const data = await res.json();
+    if(data.success){
+      document.getElementById('modalName').value = data.student.name || '';
+      document.getElementById('modalRoomNo').value = data.student.room_no || '';
+      document.getElementById('modalHostelName').value = data.student.hostel_name || '';
+      document.getElementById('modalHostelFee').value = data.student.hostel_fee || 0;
+    }
+  }catch(err){console.error(err);}
+}
+
+// Save Billing
+async function saveBilling(){
+  const payload = {
+    roll_no: document.getElementById('modalRollNo').value.trim(),
+    student_name: document.getElementById('modalName').value.trim(),
+    room_no: document.getElementById('modalRoomNo').value.trim(),
+    hostel_name: document.getElementById('modalHostelName').value.trim(),
+    monthly_fee: parseFloat(document.getElementById('modalMonthlyFee').value) || 0,
+    hostel_fee: parseFloat(document.getElementById('modalHostelFee').value) || 0,
+    paid_amount: parseFloat(document.getElementById('modalPaidAmount').value) || 0,
+    scholarship: parseFloat(document.getElementById('modalScholarship').value) || 0,
+    food_preference: document.getElementById('modalFoodPref').value,
+    month: document.getElementById('modalMonth').value.trim(),
+    academic_year: document.getElementById('modalAcademicYear').value.trim()
+  };
+
+  if(!payload.roll_no || !payload.month || !payload.academic_year){
+    return alert('Roll No, Month, and Academic Year are required.');
+  }
+
+  try{
+    const res = await fetch('/admin/api/billing/add',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if(data.success){
+      alert('Billing added successfully');
+      closeModal();
+      loadBilling();
+    }else{
+      alert('Error: '+data.message);
+    }
+  }catch(err){console.error(err);}
+}
+
+document.addEventListener('DOMContentLoaded',()=>loadBilling());
+</script>
+</body>
+</html>
+ 

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
+<title>Admin Dashboard</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #f5f5f5; margin:0; padding:0; }
+
+  main { padding:24px; text-align:center; }
+  footer { text-align:center; padding:16px; background:#e0e0e0; margin-top:24px; }
+
+
+header {
+  background: #007bff;
+  color: white;
+  padding: 16px 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+header h1 {
+  margin: 0;
+  font-size: 24px;
+  flex: 1;
+  text-align: center;
+}
+header a {
+  position: absolute;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  text-decoration: none;
+  background: white;
+  color: #007bff;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: bold;
+  transition: background 0.3s, color 0.3s;
+}
+header a:hover {
+  background: #0056b3;
+  color: white;
+}
+nav {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+  background: #e0e0e0;
+}
+nav a,
+.dropdown-btn {
+  text-decoration: none;
+  padding: 12px 24px;
+  background: #007bff;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+}
+nav a:hover,
+.dropdown-btn:hover {
+  background: #0056b3;
+}
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: #007bff;
+  min-width: 200px;
+  border-radius: 6px;
+  z-index: 1;
+  flex-direction: column;
+}
+.dropdown-content a {
+  display: block;
+  padding: 12px 16px;
+  margin: 2px 0;
+}
+.dropdown:hover .dropdown-content {
+  display: flex;
+}
+
+h2 {
+  margin-bottom: 8px;
+  color: #007bff;
+}
+.message {
+  font-weight: bold;
+  margin-top: 8px;
+  color: red;
+}
+
+
+  /* Tables */
+  table { width:100%; border-collapse:collapse; margin-top:20px; }
+  th, td { border:1px solid #ccc; padding:8px; text-align:center; }
+  th { background:#007bff; color:white; }
+
+  /* Notification Popup */
+  #notification {
+    display: none;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #007bff;
+    color: white;
+    padding: 16px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    z-index: 9999;
+    animation: slideIn 0.4s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .close-btn {
+    background: white;
+    color: #007bff;
+    border: none;
+    border-radius: 4px;
+    padding: 4px 8px;
+    margin-left: 12px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  .close-btn:hover { background: #f1f1f1; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Admin Dashboard</h1>
+   <a href="/logout">Logout</a>
+</header>
+
+<nav>
+  <div class="dropdown">
+    <div class="dropdown-btn">Finance&Billing &#9662;</div>
+    <div class="dropdown-content">
+      <a href="billing-summary.html">Billing</a>
+    </div>
+  </div>
+
+  <div class="dropdown">
+    <div class="dropdown-btn">Applications &#9662;</div>
+    <div class="dropdown-content">
+      <a href="applications-all.html">All Applications</a>
+    </div>
+  </div>
+
+  <div class="dropdown">
+    <div class="dropdown-btn">Students &#9662;</div>
+    <div class="dropdown-content">
+      <a href="students.html">All Students</a>
+    </div>
+  </div>
+
+  <div class="dropdown">
+    <div class="dropdown-btn">Rooms &#9662;</div>
+    <div class="dropdown-content">
+      <a href="rooms.html">Rooms Management</a>
+    </div>
+  </div>
+
+  <a href="complaints.html">Complaints</a>
+
+  <div class="dropdown">
+    <div class="dropdown-btn">Reports &#9662;</div>
+    <div class="dropdown-content">
+      <a href="report-rooms.html">Rooms Report</a>
+      <a href="report-students.html">Students Report</a>
+      <a href="report-billing.html">Billing Report</a>
+      <a href="report-scholarship.html">Scholarship Report</a>
+    </div>
+  </div>
+
+  <a href="announcement.html">Announcements</a>
+ 
+</nav>
+
+<main>
+  <h2>Welcome, Admin!</h2>
+  <p>Select an option from the menu above to manage hostel data.</p>
+</main>
+
+<!-- Notification Popup -->
+<div id="notification">
+  <span id="notification-message">You have a new alert!</span>
+  <button class="close-btn" onclick="closeNotification()">×</button>
+</div>
+
+<footer>
+  &copy; 2025 Hostel Management
+</footer>
+
+<script>
+  // Function to show a popup message
+  function showNotification(message) {
+    const notification = document.getElementById('notification');
+    const msg = document.getElementById('notification-message');
+    msg.textContent = message;
+    notification.style.display = 'block';
+
+    setTimeout(() => {
+      notification.style.display = 'none';
+    }, 5000);
+  }
+
+  function closeNotification() {
+    document.getElementById('notification').style.display = 'none';
+  }
+
+
+
+</script>
+
+</body>
+</html>

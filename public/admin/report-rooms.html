@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rooms Report</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<style>
+body { background:#f8f9fa; }
+table th { background:#007bff; color:#fff; text-align:center; }
+</style>
+</head>
+<body class="p-3">
+<h2>Rooms Report</h2>
+
+<div class="row mb-3">
+  <div class="col-md-3">
+    <select id="hostelFilter" class="form-select">
+      <option value="all">All Hostels</option>
+    </select>
+  </div>
+  <div class="col-md-3">
+    <select id="floorFilter" class="form-select">
+      <option value="all">All Floors</option>
+      <option value="Ground">Ground</option>
+      <option value="First">First</option>
+      <option value="Second">Second</option>
+    </select>
+  </div>
+  <div class="col-md-3">
+    <button class="btn btn-primary" onclick="loadRooms()">Filter</button>
+  </div>
+  <div class="col-md-3 text-end">
+    <button class="btn btn-success" onclick="exportCSV()">Export CSV</button>
+  </div>
+</div>
+
+<table class="table table-bordered" id="roomsTable">
+  <thead>
+    <tr>
+      <th>Hostel Name</th>
+      <th>Floor</th>
+      <th>Room No</th>
+      <th>Category</th>
+      <th>Capacity</th>
+      <th>Current Occupants</th>
+      <th>Remaining</th>
+      <th>Occupants Roll Nos</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<script>
+let roomsData = [];
+
+async function loadRooms() {
+  const hostel = document.getElementById("hostelFilter").value;
+  const floor = document.getElementById("floorFilter").value;
+  const res = await axios.get("/admin/api/rooms", { params: { hostel_name: hostel, floor } });
+  roomsData = res.data.rooms;
+  renderRooms();
+}
+
+function renderRooms() {
+  const tbody = document.querySelector("#roomsTable tbody");
+  tbody.innerHTML = "";
+  roomsData.forEach(r => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${r.hostel_name}</td>
+        <td>${r.floor}</td>
+        <td>${r.room_no}</td>
+        <td>${r.category}</td>
+        <td>${r.capacity}</td>
+        <td>${r.current_occupants}</td>
+        <td>${r.remaining}</td>
+        <td>${r.occupants_rolls.join(", ")}</td>
+      </tr>`;
+  });
+}
+
+function exportCSV() {
+  let csv = "Hostel,Floor,Room,Category,Capacity,Occupied,Remaining,Occupants\n";
+  roomsData.forEach(r => {
+    csv += `${r.hostel_name},${r.floor},${r.room_no},${r.category},${r.capacity},${r.current_occupants},${r.remaining},"${r.occupants_rolls.join(" ")}"\n`;
+  });
+  downloadCSV(csv, "rooms_report.csv");
+}
+
+function downloadCSV(csv, filename) {
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  window.URL.revokeObjectURL(url);
+}
+
+loadRooms();
+</script>
+</body>
+</html>

@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hostel Registration Form</title>
+<style>
+  body { font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:linear-gradient(135deg, #007bff, #00c6ff); margin:0; padding:20px; display:flex; justify-content:center; min-height:100vh; }
+  .form-container { background:#fff; padding:30px 40px; border-radius:15px; width:950px; box-shadow:0px 8px 20px rgba(0,0,0,0.25); }
+  .form-header { display:flex; justify-content:space-between; margin-bottom:20px; }
+  .form-header img { height:60px; }
+  .student-photo { width:100px;height:120px;border:2px solid #aaa; display:flex; align-items:center; justify-content:center; font-size:12px; color:#555; overflow:hidden; background-size:cover; background-position:center; }
+  h2 { text-align:center; margin-bottom:5px; color:#222; font-size:26px; }
+  p { text-align:center; margin-bottom:20px; font-size:14px; color:#666; }
+  h3 { margin-top:25px; color:#007bff; }
+  .form-group { display:flex; align-items:center; margin-bottom:15px; }
+  .form-group label { width:250px; font-weight:bold; font-size:14px; }
+  .form-group input, .form-group select, .form-group textarea { flex:1; padding:10px; border:1px solid #ccc; border-radius:6px; font-size:14px; }
+  .form-group textarea { resize:none; }
+  .gender-options, .radio-options { display:flex; gap:15px; font-weight:normal; }
+  button { padding:14px; background:linear-gradient(to right,#007bff,#00c6ff); color:white; font-size:16px; font-weight:bold; border:none; border-radius:10px; cursor:pointer; margin-top:20px; transition:0.3s; width:30%; }
+  button:hover { background:linear-gradient(to right, #0056b3, #0091cc); }
+  #preview, #successPage { display:none; padding:20px; }
+  .preview-item { margin-bottom:10px; font-size:15px; }
+  .preview-item strong { display:inline-block; width:250px; }
+  .preview-photo { width:120px; height:150px; border:2px solid #ccc; margin-bottom:15px; object-fit:cover; }
+
+  .education-table { width:100%; border-collapse:collapse; margin-top:15px; margin-bottom:20px; }
+  .education-table th, .education-table td { border:1px solid #ccc; padding:10px; text-align:left; font-size:14px; }
+  .education-table th { background-color:#007bff; color:white; font-weight:600; }
+  .education-table td input { width:95%; padding:6px 8px; border:1px solid #ccc; border-radius:5px; font-size:14px; }
+  .education-table td input:focus { outline:none; border-color:#007bff; box-shadow:0 0 5px rgba(0,123,255,0.5); }
+  .hidden { display:none; }
+</style>
+</head>
+<body>
+
+<div class="form-container" id="form-container">
+  <div class="form-header">
+    <img src="university-logo.png" alt="University Logo">
+    <div class="student-photo" id="studentPhotoPreview">Student Photo</div>
+  </div>
+
+  <h2>Hostel Registration Form</h2>
+  <p>Mahatma Gandhi University - Nalgonda</p>
+
+  <form id="registrationForm" enctype="multipart/form-data">
+
+    <!-- Personal Info -->
+    <div class="form-group"><label>Full Name:</label><input type="text" name="fullName" required></div>
+    <div class="form-group"><label>Roll Number:</label><input type="text" name="roll_no" required></div>
+    <div class="form-group"><label>Father's Name:</label><input type="text" name="fatherName" required></div>
+    <div class="form-group"><label>Profession:</label><input type="text" name="profession"></div>
+    <div class="form-group"><label>Annual Income:</label><input type="number" name="income"></div>
+    <div class="form-group"><label>Date of Birth:</label><input type="date" name="dob" required></div>
+    <div class="form-group"><label>Place of Birth:</label><input type="text" name="birthPlace"></div>
+    <div class="form-group"><label>Aadhaar No:</label><input type="text" name="aadhaar" maxlength="12"></div>
+
+    <div class="form-group"><label>Gender:</label>
+      <div class="gender-options">
+        <label><input type="radio" name="gender" value="Male" required> Male</label>
+        <label><input type="radio" name="gender" value="Female"> Female</label>
+        <label><input type="radio" name="gender" value="Other"> Other</label>
+      </div>
+    </div>
+
+    <div class="form-group"><label>Nationality:</label>
+      <select name="nationality" required>
+        <option value="">Select</option>
+        <option value="Indian">Indian</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+
+    <div class="form-group"><label>Blood Group:</label>
+      <select name="bloodGroup">
+        <option value="">Select</option>
+        <option>A+</option><option>A-</option>
+        <option>B+</option><option>B-</option>
+        <option>O+</option><option>O-</option>
+        <option>AB+</option><option>AB-</option>
+      </select>
+    </div>
+
+    <div class="form-group"><label>Food Preference:</label>
+      <label><input type="radio" name="foodPreference" value="Veg" required> Veg</label>
+      <label><input type="radio" name="foodPreference" value="Non-Veg"> Non-Veg</label>
+    </div>
+
+    <!-- Course -->
+    <h3>Course Details</h3>
+    <div class="form-group"><label>Course:</label>
+      <select name="course" id="courseSelect" required>
+        <option value="">Select</option>
+        <option value="B.Tech">B.Tech</option>
+        <option value="PG">PG</option>
+      </select>
+    </div>
+    <div class="form-group hidden" id="groupDiv"><label>Group:</label>
+      <select name="branch" id="groupSelect"></select>
+    </div>
+    <div class="form-group hidden" id="yearDiv"><label>Year:</label>
+      <select name="year" id="yearSelect"></select>
+    </div>
+
+    <!-- Address -->
+    <h3>Permanent Address</h3>
+    <div class="form-group"><label>Village:</label><input type="text" name="permVillage"></div>
+    <div class="form-group"><label>Pincode:</label><input type="text" name="permPincode" maxlength="6"></div>
+    <div class="form-group"><label>Mandal:</label><input type="text" name="permMandal"></div>
+    <div class="form-group"><label>District:</label><input type="text" name="permDistrict"></div>
+    <div class="form-group"><label>State:</label><input type="text" name="permState"></div>
+
+    <h3>Present Address</h3>
+    <div class="form-group"><label>Village:</label><input type="text" name="presVillage"></div>
+    <div class="form-group"><label>Pincode:</label><input type="text" name="presPincode" maxlength="6"></div>
+    <div class="form-group"><label>Mandal:</label><input type="text" name="presMandal"></div>
+    <div class="form-group"><label>District:</label><input type="text" name="presDistrict"></div>
+    <div class="form-group"><label>State:</label><input type="text" name="presState"></div>
+
+    <!-- Others -->
+    <div class="form-group"><label>Email:</label><input type="email" name="email"></div>
+    <div class="form-group"><label>Contact:</label><input type="tel" name="contact" maxlength="10"></div>
+    <div class="form-group"><label>Distance from College (km):</label><input type="number" name="distance_km" required></div>
+
+    <div class="form-group"><label>Upload Student Photo:</label><input type="file" name="student_photo" id="photoUpload" accept="image/*" required></div>
+    <div class="form-group"><label>Upload Certificate:</label><input type="file" name="certificate" accept=".pdf,.jpg,.jpeg,.png"></div>
+    <div class="form-group"><label>Application Type:</label>
+      <select name="applicationType">
+        <option>Fresh</option>
+        <option>Renewal</option>
+      </select>
+    </div>
+
+    <h3>Education Details</h3>
+    <table class="education-table">
+      <tr><th>Course</th><th>Place of Study</th><th>Period</th></tr>
+      <tr><td>Class VI to X</td><td><input type="text" name="school"></td><td><input type="text" name="schoolPeriod"></td></tr>
+      <tr><td>Intermediate</td><td><input type="text" name="college"></td><td><input type="text" name="collegePeriod"></td></tr>
+    </table>
+
+    <div style="display:flex; gap:10px;">
+      <button type="button" onclick="showPreview()">Preview</button>
+      <button type="reset">Reset</button>
+      <button type="button" onclick="submitForm()">Submit</button>
+    </div>
+  </form>
+</div>
+
+<!-- Preview -->
+<div class="form-container" id="preview">
+  <h2>Preview Your Details</h2>
+  <div id="previewContent"></div>
+  <button onclick="editForm()">Edit</button>
+  <button onclick="submitForm()">Submit</button>
+</div>
+
+<!-- Success -->
+<div class="form-container" id="successPage">
+  <h2>🎉 Registration Successful</h2>
+  <p>Your Reference Number: <strong id="refNumber"></strong></p>
+  <button onclick="location.href='/'">Go to Home</button>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", initForm);
+
+function initForm(){
+  const courseSelect=document.getElementById('courseSelect');
+  const groupDiv=document.getElementById('groupDiv');
+  const yearDiv=document.getElementById('yearDiv');
+  const groupSelect=document.getElementById('groupSelect');
+  const yearSelect=document.getElementById('yearSelect');
+
+  courseSelect.addEventListener('change',()=>{
+    const val=courseSelect.value;
+    groupSelect.innerHTML='';
+    yearSelect.innerHTML='';
+    if(val==='B.Tech'){
+      groupDiv.classList.remove('hidden');
+      yearDiv.classList.remove('hidden');
+      ['CSE','EEE','ECE','MECH'].forEach(g=>groupSelect.add(new Option(g,g)));
+      [1,2,3,4].forEach(y=>yearSelect.add(new Option(y,y)));
+    } else if(val==='PG'){
+      groupDiv.classList.remove('hidden');
+      yearDiv.classList.remove('hidden');
+      ['MCA','MBA','M.Tech'].forEach(g=>groupSelect.add(new Option(g,g)));
+      [1,2].forEach(y=>yearSelect.add(new Option(y,y)));
+    } else {
+      groupDiv.classList.add('hidden');
+      yearDiv.classList.add('hidden');
+    }
+  });
+
+  // Convert certain fields to uppercase
+  const upperFields = [
+    'fullName','fatherName','birthPlace',
+    'permVillage','permMandal','permDistrict','permState',
+    'presVillage','presMandal','presDistrict','presState'
+  ];
+  upperFields.forEach(name=>{
+    const input=document.querySelector(`input[name="${name}"]`);
+    if(input){
+      input.addEventListener('input',e=>e.target.value=e.target.value.toUpperCase());
+    }
+  });
+
+  // Input restrictions
+  document.querySelector('input[name="aadhaar"]').addEventListener('input',e=>e.target.value=e.target.value.replace(/\D/g,'').slice(0,12));
+  document.querySelector('input[name="contact"]').addEventListener('input',e=>e.target.value=e.target.value.replace(/\D/g,'').slice(0,10));
+  document.querySelector('input[name="permPincode"]').addEventListener('input',e=>e.target.value=e.target.value.replace(/\D/g,'').slice(0,6));
+  document.querySelector('input[name="presPincode"]').addEventListener('input',e=>e.target.value=e.target.value.replace(/\D/g,'').slice(0,6));
+
+  // Photo preview
+  const photoInput=document.getElementById('photoUpload');
+  const photoPreview=document.getElementById('studentPhotoPreview');
+  photoInput.addEventListener('change',()=>{
+    const file=photoInput.files[0];
+    if(file && file.size>100*1024){ alert('Photo must be less than 100 KB'); photoInput.value=''; return; }
+    if(file){
+      const reader=new FileReader();
+      reader.onload=e=>photoPreview.style.backgroundImage=`url(${e.target.result})`;
+      reader.readAsDataURL(file);
+    }
+  });
+}
+
+function showPreview(){
+  const form=document.getElementById("registrationForm");
+  if(!form.checkValidity()){form.reportValidity();return;}
+  const fd=new FormData(form);
+  let html="";
+  fd.forEach((v,k)=>{
+    if(k!=="student_photo" && k!=="certificate"){html+=`<div class="preview-item"><strong>${k}:</strong> ${v}</div>`;}
+  });
+  document.getElementById("previewContent").innerHTML=html;
+  document.getElementById("form-container").style.display="none";
+  document.getElementById("preview").style.display="block";
+}
+function editForm(){
+  document.getElementById("form-container").style.display="block";
+  document.getElementById("preview").style.display="none";
+}
+async function submitForm(){
+  const form=document.getElementById("registrationForm");
+  if(!form.checkValidity()){form.reportValidity();return;}
+  const fd=new FormData(form);
+  const res=await fetch("/submit-application",{method:"POST",body:fd,credentials:"same-origin"});
+  const data=await res.json();
+  if(data.success){
+    document.getElementById("preview").style.display="none";
+    document.getElementById("form-container").style.display="none";
+    document.getElementById("successPage").style.display="block";
+    document.getElementById("refNumber").textContent=data.ref_number;
+  } else { alert("Error: "+(data.message||"Server error")); }
+}
+
+// Check if student already applied
+async function checkApplicationStatus(){
+  const rollInput = document.querySelector('input[name="roll_no"]');
+  if(!rollInput) return;
+  const roll_no = rollInput.value;
+  if(!roll_no) return;
+
+  try {
+    const res = await fetch(`/api/hostel-application/${roll_no}`);
+    const data = await res.json();
+    if(data.applied){
+      document.getElementById("registrationForm").style.display="none";
+
+      const container = document.getElementById("form-container");
+      const msg = document.createElement("div");
+      msg.className="status-message";
+      msg.innerHTML = `
+        <h3>Application Already Submitted</h3>
+        <p>Reference Number: <strong>${data.application.ref_number}</strong></p>
+        <p>Status: <strong>${data.application.status}</strong></p>
+      `;
+      container.appendChild(msg);
+    }
+  } catch(err){
+    console.error("Error checking application:", err);
+  }
+}
+</script>
+
+</body>
+</html>

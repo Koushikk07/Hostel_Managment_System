@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #1e90ff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .login-box {
+      background: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      width: 350px;
+      text-align: center;
+    }
+
+    .login-box h2 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    .login-box input {
+      width: 90%;
+      margin: 8px 0;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    .login-box button {
+      width: 95%;
+      padding: 10px;
+      margin-top: 10px;
+      background: #1e90ff;
+      border: none;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .login-box button:hover {
+      background: #0b63c6;
+    }
+
+    .error {
+      color: red;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    .register-link {
+      margin-top: 15px;
+      font-size: 14px;
+    }
+    .register-link a {
+      color: #1e90ff;
+      text-decoration: none;
+    }
+    .register-link a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-box">
+    <h2>Login</h2>
+    <form id="loginForm" action="/login" method="post">
+      <input type="text" name="roll_no" placeholder="Roll Number" required><br>
+       <input type="password" name="password" placeholder="Password" required><br>
+      <!-- Error message -->
+      <p id="error-message" class="error"></p>
+      <p><a href="forgotpassword.html">Forgot Password?</a></p>
+
+      <button type="submit">Login</button>
+    </form>
+    <p class="register-link">Don't have an account? <a href="register.html">Register here</a></p>
+  </div>
+
+  <script>
+    // Show error from URL
+    const params = new URLSearchParams(window.location.search);
+    const error = params.get("error");
+    if (error) {
+      document.getElementById("error-message").textContent = error;
+    }
+
+    // Reset form on page load (refresh or after redirect)
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("loginForm").reset();
+    });
+
+  // Always clear login form when page loads
+  document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("loginForm").reset();
+  });
+
+  // If user presses Back, force reload instead of showing cached page
+  window.addEventListener("pageshow", (event) => {
+    if (event.persisted) {
+      window.location.reload();
+    }
+  });
+
+
+  </script>
+</body>
+</html>

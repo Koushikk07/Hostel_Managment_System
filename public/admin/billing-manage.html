@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Billing Manage</title>
+<style>
+body { font-family: Arial, sans-serif; margin: 12px; background: #fafafa; }
+table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+th, td { padding: 8px; border: 1px solid #ddd; text-align: center; }
+th { background: #007bff; color: #fff; }
+.total-row { font-weight: bold; background: #eee; }
+button { padding: 6px 12px; border: none; border-radius: 6px; background: #007bff; color: #fff; cursor: pointer; margin: 4px; }
+.year-block { border: 2px solid #007bff; padding: 10px; margin-bottom: 20px; border-radius: 8px; background: #fff; }
+.editable { min-width: 50px; }
+</style>
+</head>
+<body>
+
+<h2>Billing Manage</h2>
+<div id="studentInfo"></div>
+<button onclick="addYear()">Add Academic Year</button>
+<button onclick="toggleEdit()">Toggle Edit</button>
+<div id="yearsContainer"></div>
+
+<script>
+let editMode = false;
+
+function getRoll(){ 
+  return new URLSearchParams(window.location.search).get('roll_no'); 
+}
+
+// Load student and billing
+async function loadManage(){
+  const roll = getRoll();
+  const res = await fetch(`/admin/api/billing-manage/${roll}`);
+  const data = await res.json();
+  if(!data.success){ alert("Student not found"); return; }
+
+  const s = data.student;
+  document.getElementById("studentInfo").innerText =
+    `${s.name} | Branch: ${s.branch || '-'} | Room: ${s.room_no || '-'} | Hostel: ${s.hostel_name || '-'}`;
+
+  document.getElementById("yearsContainer").innerHTML = "";
+
+  Object.keys(data.billingByYear).forEach(year => {
+    renderBillingTable(year, data.billingByYear[year]);
+  });
+}
+
+// Render table for one year
+function renderBillingTable(label, rows = []){
+  const container = document.getElementById("yearsContainer");
+  const block = document.createElement("div");
+  block.className = "year-block";
+  block.dataset.year = label;
+
+  let tbodyHTML = "";
+  rows.forEach((r, i) => {
+    tbodyHTML += `<tr>
+      <td>${i+1}</td>
+      <td contenteditable="${editMode}" class="editable">${r.month}</td>
+      <td contenteditable="${editMode}" class="editable">${r.monthly_fee}</td>
+      <td contenteditable="${editMode}" class="editable">${r.paid_amount}</td>
+      <td contenteditable="${editMode}" class="editable">${r.scholarship}</td>
+      <td>${r.remaining}</td>
+      <td>${r.due}</td>
+      <td><button onclick="deleteRow(this)">Delete</button></td>
+    </tr>`;
+  });
+
+  // Total row WITHOUT colspan
+  tbodyHTML += `<tr class="total-row">
+    <td>#</td>
+    <td>Total</td>
+    <td>0</td><td>0</td><td>0</td><td>0</td><td>0</td>
+    <td></td>
+  </tr>`;
+
+  block.innerHTML = `<h3>${label}</h3>
+  <table class="billingTable">
+    <thead>
+      <tr>
+        <th>#</th><th>Month</th><th>Monthly Fee</th><th>Paid</th>
+        <th>Scholarship</th><th>Remaining</th><th>Due</th><th>Action</th>
+      </tr>
+    </thead>
+    <tbody>${tbodyHTML}</tbody>
+  </table>
+  <button onclick="addRow(this)">Add Row</button>
+  <button onclick="saveYear(this)">Save Year</button>`;
+
+  container.appendChild(block);
+
+  const tbodyEl = block.querySelector("tbody");
+  recalcTotals(tbodyEl);
+
+  tbodyEl.querySelectorAll(".editable").forEach(td => {
+    td.addEventListener("input", () => recalcTotals(tbodyEl));
+  });
+}
+
+// Recalculate totals
+function recalcTotals(tbody){
+  let totalMonthly = 0, totalPaid = 0, totalScholarship = 0;
+
+  for(let i=0;i<tbody.rows.length;i++){
+    const row = tbody.rows[i];
+    if(row.classList.contains("total-row")) continue;
+    const monthly = parseFloat(row.cells[2].innerText)||0;
+    const paid = parseFloat(row.cells[3].innerText)||0;
+    const scholarship = parseFloat(row.cells[4].innerText)||0;
+
+    totalMonthly += monthly;
+    totalPaid += paid;
+    totalScholarship += scholarship;
+
+    row.cells[5].innerText = Math.max(0, paid + scholarship - monthly).toFixed(2);
+    row.cells[6].innerText = Math.max(0, monthly - (paid + scholarship)).toFixed(2);
+  }
+
+  const totalRow = tbody.querySelector(".total-row");
+  if(totalRow){
+    const yearlyBalance = totalPaid + totalScholarship - totalMonthly;
+    totalRow.cells[2].innerText = totalMonthly.toFixed(2);
+    totalRow.cells[3].innerText = totalPaid.toFixed(2);
+    totalRow.cells[4].innerText = totalScholarship.toFixed(2);
+    totalRow.cells[5].innerText = (yearlyBalance >=0 ? yearlyBalance : 0).toFixed(2);
+    totalRow.cells[6].innerText = (yearlyBalance <0 ? Math.abs(yearlyBalance) : 0).toFixed(2);
+  }
+}
+
+// Add row
+function addRow(button){
+  const tbody = button.closest(".year-block").querySelector("tbody");
+  const n = tbody.rows.length;
+  const tr = document.createElement("tr");
+  tr.innerHTML = `<td>${n}</td>
+    <td contenteditable="${editMode}" class="editable">Month</td>
+    <td contenteditable="${editMode}" class="editable">0</td>
+    <td contenteditable="${editMode}" class="editable">0</td>
+    <td contenteditable="${editMode}" class="editable">0</td>
+    <td>0</td><td>0</td>
+    <td><button onclick="deleteRow(this)">Delete</button></td>`;
+  tbody.insertBefore(tr, tbody.querySelector(".total-row"));
+  recalcTotals(tbody);
+
+  tr.querySelectorAll(".editable").forEach(td => {
+    td.addEventListener("input", () => recalcTotals(tbody));
+  });
+}
+
+// Delete row
+function deleteRow(button){
+  const tbody = button.closest("tbody");
+  button.closest("tr").remove();
+  recalcTotals(tbody);
+}
+
+// Toggle edit mode
+function toggleEdit(){
+  editMode = !editMode;
+  document.querySelectorAll(".billingTable tbody tr td.editable").forEach(td=>{
+    td.contentEditable = editMode;
+  });
+  alert(editMode ? "Edit ON" : "Edit OFF");
+}
+
+// Add new academic year
+function addYear(){
+  const yearLabel = prompt("Enter Academic Year (e.g., 2024-25):");
+  if(!yearLabel) return;
+  renderBillingTable(yearLabel, []);
+}
+
+// Save a year
+async function saveYear(button){
+  const block = button.closest(".year-block");
+  const year = block.dataset.year;
+  const rows = [...block.querySelectorAll("tbody tr")].filter(r => !r.classList.contains("total-row"));
+  const data = rows.map(r => ({
+    month: r.cells[1].innerText.trim(),
+    monthly_fee: parseFloat(r.cells[2].innerText) || 0,
+    paid_amount: parseFloat(r.cells[3].innerText) || 0,
+    scholarship: parseFloat(r.cells[4].innerText) || 0
+  }));
+
+  const roll = getRoll();
+  const res = await fetch("/admin/api/billing/saveYear", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({roll_no: roll, academic_year: year, rows: data})
+  });
+
+  const result = await res.json();
+  alert(result.success ? "Saved successfully" : "Save failed: " + result.message);
+}
+
+window.onload = loadManage;
+</script>
+
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Billing Manage</title>
+<style>
+body { font-family: Arial, sans-serif; margin: 12px; background: #fafafa; }
+table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+th, td { padding: 8px; border: 1px solid #ddd; text-align: center; }
+th { background: #007bff; color: #fff; }
+.total-row { font-weight: bold; background: #eee; }
+button { padding: 6px 12px; border: none; border-radius: 6px; background: #007bff; color: #fff; cursor: pointer; margin: 4px; }
+.year-block { border: 2px solid #007bff; padding: 10px; margin-bottom: 20px; border-radius: 8px; background: #fff; }
+.editable { min-width: 50px; }
+</style>
+</head>
+<body>
+
+<h2>Billing Manage</h2>
+<div id="studentInfo"></div>
+<button onclick="addYear()">Add Academic Year</button>
+<button onclick="toggleEdit()">Toggle Edit</button>
+<div id="yearsContainer"></div>
+
+<script>
+let editMode = false;
+
+function getRoll(){ 
+  return new URLSearchParams(window.location.search).get('roll_no'); 
+}
+
+// Load student and billing
+async function loadManage(){
+  const roll = getRoll();
+  const res = await fetch(`/admin/api/billing-manage/${roll}`);
+  const data = await res.json();
+  if(!data.success){ alert("Student not found"); return; }
+
+  const s = data.student;
+  document.getElementById("studentInfo").innerText =
+    `${s.name} | Branch: ${s.branch || '-'} | Room: ${s.room_no || '-'} | Hostel: ${s.hostel_name || '-'}`;
+
+  document.getElementById("yearsContainer").innerHTML = "";
+
+  Object.keys(data.billingByYear).forEach(year => {
+    renderBillingTable(year, data.billingByYear[year]);
+  });
+}
+
+// Render table for one year
+function renderBillingTable(label, rows = []){
+  const container = document.getElementById("yearsContainer");
+  const block = document.createElement("div");
+  block.className = "year-block";
+  block.dataset.year = label;
+
+  let tbodyHTML = "";
+  rows.forEach((r, i) => {
+    tbodyHTML += `<tr>
+      <td>${i+1}</td>
+      <td contenteditable="${editMode}" class="editable">${r.month}</td>
+      <td contenteditable="${editMode}" class="editable">${r.monthly_fee}</td>
+      <td contenteditable="${editMode}" class="editable">${r.paid_amount}</td>
+      <td contenteditable="${editMode}" class="editable">${r.scholarship}</td>
+      <td>${r.remaining}</td>
+      <td>${r.due}</td>
+      <td><button onclick="deleteRow(this)">Delete</button></td>
+    </tr>`;
+  });
+
+  // Total row WITHOUT colspan
+  tbodyHTML += `<tr class="total-row">
+    <td>#</td>
+    <td>Total</td>
+    <td>0</td><td>0</td><td>0</td><td>0</td><td>0</td>
+    <td></td>
+  </tr>`;
+
+  block.innerHTML = `<h3>${label}</h3>
+  <table class="billingTable">
+    <thead>
+      <tr>
+        <th>#</th><th>Month</th><th>Monthly Fee</th><th>Paid</th>
+        <th>Scholarship</th><th>Remaining</th><th>Due</th><th>Action</th>
+      </tr>
+    </thead>
+    <tbody>${tbodyHTML}</tbody>
+  </table>
+  <button onclick="addRow(this)">Add Row</button>
+  <button onclick="saveYear(this)">Save Year</button>`;
+
+  container.appendChild(block);
+
+  const tbodyEl = block.querySelector("tbody");
+  recalcTotals(tbodyEl);
+
+  tbodyEl.querySelectorAll(".editable").forEach(td => {
+    td.addEventListener("input", () => recalcTotals(tbodyEl));
+  });
+}
+
+// Recalculate totals
+function recalcTotals(tbody){
+  let totalMonthly = 0, totalPaid = 0, totalScholarship = 0;
+
+  for(let i=0;i<tbody.rows.length;i++){
+    const row = tbody.rows[i];
+    if(row.classList.contains("total-row")) continue;
+    const monthly = parseFloat(row.cells[2].innerText)||0;
+    const paid = parseFloat(row.cells[3].innerText)||0;
+    const scholarship = parseFloat(row.cells[4].innerText)||0;
+
+    totalMonthly += monthly;
+    totalPaid += paid;
+    totalScholarship += scholarship;
+
+    row.cells[5].innerText = Math.max(0, paid + scholarship - monthly).toFixed(2);
+    row.cells[6].innerText = Math.max(0, monthly - (paid + scholarship)).toFixed(2);
+  }
+
+  const totalRow = tbody.querySelector(".total-row");
+  if(totalRow){
+    const yearlyBalance = totalPaid + totalScholarship - totalMonthly;
+    totalRow.cells[2].innerText = totalMonthly.toFixed(2);
+    totalRow.cells[3].innerText = totalPaid.toFixed(2);
+    totalRow.cells[4].innerText = totalScholarship.toFixed(2);
+    totalRow.cells[5].innerText = (yearlyBalance >=0 ? yearlyBalance : 0).toFixed(2);
+    totalRow.cells[6].innerText = (yearlyBalance <0 ? Math.abs(yearlyBalance) : 0).toFixed(2);
+  }
+}
+
+// Add row
+function addRow(button){
+  const tbody = button.closest(".year-block").querySelector("tbody");
+  const n = tbody.rows.length;
+  const tr = document.createElement("tr");
+  tr.innerHTML = `<td>${n}</td>
+    <td contenteditable="${editMode}" class="editable">Month</td>
+    <td contenteditable="${editMode}" class="editable">0</td>
+    <td contenteditable="${editMode}" class="editable">0</td>
+    <td contenteditable="${editMode}" class="editable">0</td>
+    <td>0</td><td>0</td>
+    <td><button onclick="deleteRow(this)">Delete</button></td>`;
+  tbody.insertBefore(tr, tbody.querySelector(".total-row"));
+  recalcTotals(tbody);
+
+  tr.querySelectorAll(".editable").forEach(td => {
+    td.addEventListener("input", () => recalcTotals(tbody));
+  });
+}
+
+// Delete row
+function deleteRow(button){
+  const tbody = button.closest("tbody");
+  button.closest("tr").remove();
+  recalcTotals(tbody);
+}
+
+// Toggle edit mode
+function toggleEdit(){
+  editMode = !editMode;
+  document.querySelectorAll(".billingTable tbody tr td.editable").forEach(td=>{
+    td.contentEditable = editMode;
+  });
+  alert(editMode ? "Edit ON" : "Edit OFF");
+}
+
+// Add new academic year
+function addYear(){
+  const yearLabel = prompt("Enter Academic Year (e.g., 2024-25):");
+  if(!yearLabel) return;
+  renderBillingTable(yearLabel, []);
+}
+
+// Save a year
+async function saveYear(button){
+  const block = button.closest(".year-block");
+  const year = block.dataset.year;
+  const rows = [...block.querySelectorAll("tbody tr")].filter(r => !r.classList.contains("total-row"));
+  const data = rows.map(r => ({
+    month: r.cells[1].innerText.trim(),
+    monthly_fee: parseFloat(r.cells[2].innerText) || 0,
+    paid_amount: parseFloat(r.cells[3].innerText) || 0,
+    scholarship: parseFloat(r.cells[4].innerText) || 0
+  }));
+
+  const roll = getRoll();
+  const res = await fetch("/admin/api/billing/saveYear", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({roll_no: roll, academic_year: year, rows: data})
+  });
+
+  const result = await res.json();
+  alert(result.success ? "Saved successfully" : "Save failed: " + result.message);
+}
+
+window.onload = loadManage;
+</script>
+
+</body>
+</html>

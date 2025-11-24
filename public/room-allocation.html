@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Room Allocation</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f5f5f5;margin:0;padding:0}
+header{background:#007bff;color:white;padding:16px;text-align:center}
+table{border-collapse:collapse;width:100%;margin:16px 0}
+th,td{border:1px solid #ccc;padding:8px;text-align:left}
+th{background:#007bff;color:white}
+.message{color:red;font-weight:bold}
+</style>
+</head>
+<body>
+<header><h1>Room Allocation</h1></header>
+<main>
+<div id="allocation-container">Loading...</div>
+</main>
+
+<script>
+async function loadRoomAllocation(){
+  const container = document.getElementById("allocation-container");
+  try{
+    const res = await fetch("/student/profile");
+    const student = await res.json();
+    if(!student.success) throw new Error("Profile not found");
+
+    const roomRes = await fetch("/api/students/" + student.student.roll_no);
+    const room = await roomRes.json();
+
+    if(room.hostel_name && room.room_no){
+      container.innerHTML = `
+        <table>
+          <tr><th>Hostel Name</th><td>${room.hostel_name}</td></tr>
+          <tr><th>Room Number</th><td>${room.room_no}</td></tr>
+        </table>
+      `;
+    } else {
+      container.innerHTML = `<p class="message">No room allocated yet.</p>`;
+    }
+
+  }catch(err){
+    container.innerHTML = `<p class="message">Error loading room allocation</p>`;
+    console.error(err);
+  }
+}
+
+loadRoomAllocation();
+</script>
+</body>
+</html>

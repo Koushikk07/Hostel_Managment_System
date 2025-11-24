@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Management</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.0/css/bootstrap.min.css">
+<style>
+body { background:#f0f2f5; }
+.container { margin-top:30px; }
+.form-section { display:none; background:#fff; padding:20px; border-radius:10px; margin-top:20px; max-height:90vh; overflow-y:auto; }
+h5 { color:#007bff; margin-top:15px; }
+img.preview-photo { width:60px; height:70px; object-fit:cover; border:1px solid #ccc; border-radius:5px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h2>Student Management</h2>
+  <div class="row mb-3">
+    <div class="col-md-6"><button class="btn btn-success" onclick="showAddForm()">Add New Student</button></div>
+    <div class="col-md-6 text-end">
+      <input type="text" id="searchInput" placeholder="Search by Roll No or Name" class="form-control d-inline-block w-50">
+      <button class="btn btn-primary" onclick="searchStudent()">Search</button>
+      <button class="btn btn-secondary" onclick="loadStudents()">Reset</button>
+    </div>
+  </div>
+
+  <table class="table table-bordered" id="studentsTable">
+    <thead>
+      <tr>
+        <th>Roll No</th>
+        <th>Full Name</th>
+        <th>Course</th>
+        <th>Branch</th>
+        <th>Year</th>
+        <th>Gender</th>
+        <th>Food</th>
+        <th>Approval</th>
+        <th>Payment</th>
+        <th>Photo</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <!-- Add/Edit Form -->
+  <div class="form-section" id="studentFormSection">
+    <h4 id="formTitle">Add New Student</h4>
+    <form id="studentForm" enctype="multipart/form-data">
+      <!-- Personal Info -->
+      <h5>Personal Info</h5>
+      <div class="row mb-2">
+        <div class="col-md-4"><label>Full Name:</label><input type="text" name="full_name" class="form-control" required></div>
+        <div class="col-md-4"><label>Roll No:</label><input type="text" name="roll_no" class="form-control" required></div>
+        <div class="col-md-4"><label>Father's Name:</label><input type="text" name="father_name" class="form-control"></div>
+      </div>
+      <div class="row mb-2">
+        <div class="col-md-4"><label>Profession:</label><input type="text" name="profession" class="form-control"></div>
+        <div class="col-md-4"><label>Annual Income:</label><input type="number" name="income" class="form-control"></div>
+        <div class="col-md-4"><label>Date of Birth:</label><input type="date" name="dob" class="form-control"></div>
+      </div>
+      <div class="row mb-2">
+        <div class="col-md-4"><label>Place of Birth:</label><input type="text" name="birth_place" class="form-control"></div>
+        <div class="col-md-4"><label>Aadhaar No:</label><input type="text" name="aadhaar" class="form-control"></div>
+        <div class="col-md-4"><label>Gender:</label>
+          <select name="gender" class="form-select"><option>Male</option><option>Female</option><option>Other</option></select>
+        </div>
+      </div>
+      <div class="row mb-2">
+        <div class="col-md-4"><label>Nationality:</label><input type="text" name="nationality" class="form-control"></div>
+        <div class="col-md-4"><label>Blood Group:</label>
+          <select name="blood_group" class="form-select">
+            <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+            <option>O+</option><option>O-</option><option>AB+</option><option>AB-</option>
+          </select>
+        </div>
+        <div class="col-md-4"><label>Food Preference:</label>
+          <select name="food_preference" class="form-select"><option>Veg</option><option>Non-Veg</option></select>
+        </div>
+      </div>
+
+      <!-- Course & Address -->
+      <h5>Course & Address</h5>
+      <div class="row mb-2">
+        <div class="col-md-4"><label>Course:</label><input type="text" name="course" class="form-control"></div>
+        <div class="col-md-4"><label>Branch:</label><input type="text" name="branch" class="form-control"></div>
+        <div class="col-md-4"><label>Year:</label><input type="number" name="year" class="form-control"></div>
+      </div>
+      <div class="row mb-2">
+        <div class="col-md-4"><label>Permanent Village:</label><input type="text" name="perm_village" class="form-control"></div>
+        <div class="col-md-4"><label>Permanent Pincode:</label><input type="text" name="perm_pincode" class="form-control"></div>
+        <div class="col-md-4"><label>Permanent Mandal:</label><input type="text" name="perm_mandal" class="form-control"></div>
+      </div>
+      <div class="row mb-2">
+        <div class="col-md-4"><label>Permanent District:</label><input type="text" name="perm_district" class="form-control"></div>
+        <div class="col-md-4"><label>Permanent State:</label><input type="text" name="perm_state" class="form-control"></div>
+        <div class="col-md-4"><label>Present Village:</label><input type="text" name="pres_village" class="form-control"></div>
+      </div>
+      <div class="row mb-2">
+        <div class="col-md-4"><label>Present Pincode:</label><input type="text" name="pres_pincode" class="form-control"></div>
+        <div class="col-md-4"><label>Present Mandal:</label><input type="text" name="pres_mandal" class="form-control"></div>
+        <div class="col-md-4"><label>Present District:</label><input type="text" name="pres_district" class="form-control"></div>
+      </div>
+      <div class="row mb-2">
+        <div class="col-md-4"><label>Present State:</label><input type="text" name="pres_state" class="form-control"></div>
+        <div class="col-md-4"><label>Email:</label><input type="email" name="email" class="form-control"></div>
+        <div class="col-md-4"><label>Contact:</label><input type="text" name="contact" class="form-control"></div>
+      </div>
+      <div class="row mb-2">
+        <div class="col-md-4"><label>Distance from College (km):</label><input type="number" name="distance_km" class="form-control"></div>
+        <div class="col-md-4"><label>Application Type:</label>
+          <select name="application_type" class="form-select"><option>Fresh</option><option>Renewal</option></select>
+        </div>
+      </div>
+
+      <!-- Education -->
+      <h5>Education Details</h5>
+      <div class="row mb-2">
+        <div class="col-md-6"><label>Class VI-X Place:</label><input type="text" name="school" class="form-control"></div>
+        <div class="col-md-6"><label>Class VI-X Period:</label><input type="text" name="school_period" class="form-control"></div>
+      </div>
+      <div class="row mb-2">
+        <div class="col-md-6"><label>Intermediate Place:</label><input type="text" name="college" class="form-control"></div>
+        <div class="col-md-6"><label>Intermediate Period:</label><input type="text" name="college_period" class="form-control"></div>
+      </div>
+
+      <!-- Hostel & Payment -->
+      <h5>Hostel & Payment</h5>
+      <div class="row mb-2">
+        <div class="col-md-4"><label>Hostel Name:</label><input type="text" name="hostel_name" class="form-control"></div>
+        <div class="col-md-4"><label>Room No:</label><input type="text" name="room_no" class="form-control"></div>
+        <div class="col-md-4"><label>Payment Status:</label>
+          <select name="payment_status" class="form-select"><option>Pending</option><option>Paid</option></select>
+        </div>
+      </div>
+      <div class="row mb-2">
+        <div class="col-md-4"><label>Payment Amount:</label><input type="number" name="payment_amount" class="form-control"></div>
+        <div class="col-md-4"><label>Student Photo:</label><input type="file" name="student_photo" class="form-control">
+          <small id="currentPhoto">Current: None</small></div>
+        <div class="col-md-4"><label>Certificate:</label><input type="file" name="certificate" class="form-control">
+          <small id="currentCertificate">Current: None</small></div>
+      </div>
+
+      <button type="submit" class="btn btn-primary mt-2">Save</button>
+      <button type="button" class="btn btn-secondary mt-2" onclick="hideForm()">Cancel</button>
+    </form>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+<script>
+let students = [];
+
+// ================= Load all students =================
+async function loadStudents() {
+  const res = await fetch("/api/students");
+  students = await res.json();
+  renderTable(students);
+}
+
+// ================= Render table =================
+function renderTable(data) {
+  const tbody = document.querySelector("#studentsTable tbody");
+  tbody.innerHTML = "";
+  data.forEach(s => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${s.roll_no}</td>
+      <td>${s.full_name}</td>
+      <td>${s.course||''}</td>
+      <td>${s.branch||''}</td>
+      <td>${s.year||''}</td>
+      <td>${s.gender||''}</td>
+      <td>${s.food_preference||''}</td>
+      <td>${s.approval_status||''}</td>
+      <td>${s.payment_status||''}</td>
+      <td>${s.student_photo?'<img src="/uploads/photos/'+s.student_photo+'" class="preview-photo">':''}</td>
+      <td>
+        <button class="btn btn-info btn-sm me-1" onclick="viewStudent('${s.roll_no}')">View</button>
+        <button class="btn btn-primary btn-sm me-1" onclick="editStudent('${s.roll_no}')">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteStudent('${s.roll_no}')">Delete</button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+// ================= Show Add Form =================
+function showAddForm() {
+  const form = document.getElementById("studentForm");
+  form.reset();
+  form.dataset.editing = "";
+  document.getElementById("formTitle").textContent = "Add New Student";
+  document.getElementById("currentPhoto").textContent = "Current: None";
+  document.getElementById("currentCertificate").textContent = "Current: None";
+  document.getElementById("studentFormSection").style.display = "block";
+}
+
+// ================= Hide Form =================
+function hideForm() { document.getElementById("studentFormSection").style.display = "none"; }
+
+// ================= Submit Form =================
+document.getElementById("studentForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const form = e.target;
+  const formData = new FormData(form);
+  const editingRoll = form.dataset.editing;
+  let url = "/api/students", method = "POST";
+  if (editingRoll) { url = `/api/students/${editingRoll}`; method = "PUT"; }
+  const res = await fetch(url, { method, body: formData });
+  if (res.ok) { hideForm(); loadStudents(); } else alert("Error saving student.");
+});
+
+// ================= Search =================
+function searchStudent() {
+  const query = document.getElementById("searchInput").value.toLowerCase();
+  const filtered = students.filter(s => s.roll_no.toLowerCase().includes(query) || s.full_name.toLowerCase().includes(query));
+  renderTable(filtered);
+}
+
+// ================= View Student =================
+async function viewStudent(roll_no) {
+  const res = await fetch(`/api/students/${roll_no}`);
+  if (!res.ok) return alert("Student not found");
+  const s = await res.json();
+  let details = "";
+  Object.keys(s).forEach(k => details += `<p><strong>${k}:</strong> ${s[k] || ""}</p>`);
+  const w = window.open("", "_blank", "width=600,height=600");
+  w.document.write(details);
+}
+
+// ================= Edit Student =================
+async function editStudent(roll_no) {
+  const res = await fetch(`/api/students/${roll_no}`);
+  if (!res.ok) return alert("Student not found");
+  const s = await res.json();
+
+  const form = document.getElementById("studentForm");
+  form.dataset.editing = roll_no;
+  document.getElementById("formTitle").textContent = "Edit Student";
+
+  const fields = [
+    "full_name","roll_no","father_name","profession","income","dob","birth_place",
+    "aadhaar","gender","nationality","blood_group","food_preference",
+    "course","branch","year","perm_village","perm_pincode","perm_mandal","perm_district","perm_state",
+    "pres_village","pres_pincode","pres_mandal","pres_district","pres_state",
+    "email","contact","distance_km","application_type",
+    "school","school_period","college","college_period",
+    "hostel_name","room_no","payment_status","payment_amount"
+  ];
+
+  fields.forEach(f => { if(form[f]) form[f].value = s[f] || ""; });
+
+  document.getElementById("currentPhoto").textContent = "Current: " + (s.student_photo || "None");
+  document.getElementById("currentCertificate").textContent = "Current: " + (s.certificate || "None");
+
+  document.getElementById("studentFormSection").style.display = "block";
+}
+
+// ================= Delete Student =================
+async function deleteStudent(roll_no) {
+  if (!confirm("Delete this student?")) return;
+  const res = await fetch(`/api/students/${roll_no}`, { method: "DELETE" });
+  if (res.ok) { loadStudents(); } else alert("Error deleting student.");
+}
+
+window.addEventListener("DOMContentLoaded", loadStudents);
+</script>
+</body>
+</html>

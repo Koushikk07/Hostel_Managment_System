@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Scholarship Report</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body class="p-3">
+<h2>Scholarship Report</h2>
+
+<div class="mb-3 text-end">
+  <button class="btn btn-success" onclick="exportCSV()">Export CSV</button>
+</div>
+
+<table class="table table-bordered" id="scholarshipTable">
+  <thead>
+    <tr>
+      <th>Roll No</th>
+      <th>Name</th>
+      <th>Academic Year</th>
+      <th>Total Scholarship</th>
+      <th>Total Paid</th>
+      <th>Total Fee</th>
+      <th>Net Balance</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<script>
+let scholarshipData = [];
+
+async function loadScholarships() {
+  const res = await axios.get("/admin/api/billing-summary");
+  const data = res.data.rows;
+  scholarshipData = data.filter(r => r.total_scholarship && r.total_scholarship !== '-');
+  renderTable();
+}
+
+function renderTable() {
+  const tbody = document.querySelector("#scholarshipTable tbody");
+  tbody.innerHTML = "";
+  scholarshipData.forEach(s => {
+    const net = (parseFloat(s.total_paid||0) + parseFloat(s.total_scholarship||0)) - parseFloat(s.total_fee||0);
+    tbody.innerHTML += `
+      <tr>
+        <td>${s.roll_no}</td>
+        <td>${s.name}</td>
+        <td>${s.academic_year}</td>
+        <td>${s.total_scholarship}</td>
+        <td>${s.total_paid}</td>
+        <td>${s.total_fee}</td>
+        <td>${net.toFixed(2)}</td>
+      </tr>`;
+  });
+}
+
+function exportCSV() {
+  let csv = "Roll No,Name,Academic Year,Scholarship,Paid,Fee,Net\n";
+  scholarshipData.forEach(s=>{
+    csv += `${s.roll_no},${s.name},${s.academic_year},${s.total_scholarship},${s.total_paid},${s.total_fee},${(parseFloat(s.total_paid||0)+parseFloat(s.total_scholarship||0)-parseFloat(s.total_fee||0)).toFixed(2)}\n`;
+  });
+  const blob = new Blob([csv], {type:"text/csv"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "scholarship_report.csv";
+  a.click();
+}
+loadScholarships();
+</script>
+</body>
+</html>
