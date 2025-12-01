@@ -107,20 +107,102 @@
   </div>
 
   <script>
-    function addAnnouncement() {
-      const newBox = document.createElement('div');
-      newBox.classList.add('announcement-box');
-      newBox.innerHTML = `
-        <h3>New Announcement</h3>
-        <p>This is a newly added announcement.</p>
-        <button class="remove-btn" onclick="removeAnnouncement(this)">Remove</button>
-      `;
-      document.getElementById('announcements').appendChild(newBox);
+    const announcementsContainer = document.getElementById('announcements');
+let currentAnnouncements = [];
+
+// Fetch all announcements and render the list
+async function fetchAndRenderAnnouncements() {
+    try {
+        const response = await fetch('/api/announcements');
+        const data = await response.json();
+        
+        if (data.success) {
+            currentAnnouncements = data.announcements;
+            renderAnnouncements(currentAnnouncements);
+        } else {
+            console.error('Failed to fetch announcements:', data.message);
+            announcementsContainer.innerHTML = `<p style="color:red;">Error loading announcements: ${data.message}</p>`;
+        }
+    } catch (error) {
+        console.error('Network error fetching announcements:', error);
+        announcementsContainer.innerHTML = `<p style="color:red;">Network Error. Check server connection.</p>`;
+    }
+}
+
+// Renders the list of announcements
+function renderAnnouncements(announcements) {
+    announcementsContainer.innerHTML = ''; // Clear existing content
+    if (announcements.length === 0) {
+        announcementsContainer.innerHTML = '<p>No announcements posted yet.</p>';
+        return;
     }
 
-    function removeAnnouncement(button) {
-      button.parentElement.remove();
+    announcements.forEach(ann => {
+        const date = new Date(ann.created_at).toLocaleString();
+        const box = document.createElement('div');
+        box.classList.add('announcement-box');
+        box.innerHTML = `
+            <h3>${ann.title}</h3>
+            <p>${ann.message}</p>
+            <small>Posted: ${date}</small>
+            <button class="remove-btn" onclick="deleteAnnouncement(${ann.id})">Remove</button>
+        `;
+        announcementsContainer.appendChild(box);
+    });
+}
+
+// Function to handle adding a new announcement
+async function addAnnouncement() {
+    const title = prompt("Enter announcement title:");
+    if (!title) return;
+    const message = prompt("Enter announcement content:");
+    if (!message) return;
+
+    try {
+        const response = await fetch('/admin/api/announcements', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title, message })
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            alert(data.message);
+            fetchAndRenderAnnouncements(); // Refresh the list
+        } else {
+            alert('Failed to post announcement: ' + data.message);
+        }
+    } catch (error) {
+        alert('Error posting announcement. Check console.');
+        console.error('Post error:', error);
     }
+}
+
+// Function to handle deleting an announcement
+async function deleteAnnouncement(id) {
+    if (!confirm("Are you sure you want to delete this announcement?")) return;
+
+    try {
+        const response = await fetch(`/admin/api/announcements/${id}`, {
+            method: 'DELETE'
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            alert(data.message);
+            fetchAndRenderAnnouncements(); // Refresh the list
+        } else {
+            alert('Failed to delete announcement: ' + data.message);
+        }
+    } catch (error) {
+        alert('Error deleting announcement. Check console.');
+        console.error('Delete error:', error);
+    }
+}
+
+// Initial load when the page is ready
+document.addEventListener('DOMContentLoaded', fetchAndRenderAnnouncements);
+    
   </script>
 
 </body>

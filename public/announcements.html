@@ -53,6 +53,67 @@
     <h3>Notice 3: Fee Payment</h3>
     <p>Students are requested to pay hostel fees before the 25th of this month.</p>
   </div>
+<script>
+  const announcementsContainer = document.getElementById('announcement-list'); // Assuming your container div has this ID
 
+// Fetch and render announcements for the student
+async function fetchAndRenderAnnouncements() {
+    try {
+        const response = await fetch('/api/announcements');
+        const data = await response.json();
+        
+        if (data.success) {
+            renderStudentAnnouncements(data.announcements);
+        } else {
+            console.error('Failed to fetch announcements:', data.message);
+            // Fallback for students
+            document.body.innerHTML += `<div style="text-align:center; color:red;">Error loading notices: ${data.message}</div>`;
+        }
+    } catch (error) {
+        console.error('Network error fetching announcements:', error);
+        document.body.innerHTML += `<div style="text-align:center; color:red;">Network Error. Could not connect to server.</div>`;
+    }
+}
+
+// Renders the list of announcements for the student
+function renderStudentAnnouncements(announcements) {
+    // Find the current container in your HTML structure
+    let container = document.body; // Or find the specific container like: document.getElementById('main-content');
+    
+    // Since announcements.html shows placeholder divs, we'll replace the content.
+    // Assuming you have a main container that holds the announcement boxes.
+    // If your original HTML had placeholder boxes, remove them first.
+    
+    // Using a new container element for clarity:
+    const newContainer = document.createElement('div');
+    newContainer.className = 'container'; 
+    newContainer.style.width = '80%';
+    newContainer.style.margin = '20px auto';
+    
+    if (announcements.length === 0) {
+        newContainer.innerHTML = '<p style="text-align:center;">No official announcements at this time.</p>';
+        container.appendChild(newContainer);
+        return;
+    }
+
+    announcements.forEach(ann => {
+        const date = new Date(ann.created_at).toLocaleDateString();
+        const box = document.createElement('div');
+        box.classList.add('announcement-box');
+        box.innerHTML = `
+            <h3>${ann.title}</h3>
+            <p>${ann.message}</p>
+            <small style="color: #666;">Posted on: ${date}</small>
+        `;
+        newContainer.appendChild(box);
+    });
+    
+    // Assuming the original content (like h1) is already there, we append the dynamic content
+    document.body.appendChild(newContainer); 
+}
+
+// Initial load when the page is ready
+document.addEventListener('DOMContentLoaded', fetchAndRenderAnnouncements);
+</script>
 </body>
 </html>

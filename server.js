@@ -50,6 +50,14 @@ function checkStudent(req, res, next) {
   return res.redirect("/?error=Access denied");
 }
 
+// NEW: Prevent browser caching of protected pages (Fixes back button after logout)
+function setNoCache(req, res, next) {
+  res.header('Cache-Control', 'no-cache, private, no-store, must-revalidate, max-stale=0, post-check=0, pre-check=0');
+  res.header('Expires', '0');
+  res.header('Pragma', 'no-cache');
+  next();
+}
+
 // ================== Routes ==================
 
 // ------------------ Default Route ------------------
@@ -60,7 +68,8 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "login.html"));
 });
 
-app.get("/logout", (req, res) => {
+// MODIFIED: Added setNoCache middleware to prevent caching of the logout page itself.
+app.get("/logout", setNoCache, (req, res) => {
   req.session.destroy(() => res.sendFile(path.join(__dirname, "public", "logout.html")));
 });
 
@@ -212,7 +221,8 @@ app.post("/register/verify-otp", async (req, res) => {
 });
 
 // ------------------ Student Dashboard ------------------
-app.get("/student-dashboard", (req, res) => {
+// MODIFIED: Added setNoCache middleware
+app.get("/student-dashboard", setNoCache, (req, res) => {
   if (!req.session.user || req.session.user.is_admin !== 0) {
     return res.redirect("/?error=Access denied");
   }
@@ -244,8 +254,10 @@ app.get("/student/profile", async (req, res) => {
 // API to check existing application
 app.get('/api/hostel-application/:roll_no', (req, res) => {
   const roll_no = req.params.roll_no;
-  const existing = applications.find(a => a.roll_no === roll_no && ['pending','approved'].includes(a.status));
-  if (existing) return res.json({ applied: true, application: existing });
+  // NOTE: 'applications' array is not defined in this file scope. Assuming this is a placeholder or relies on an external module.
+  // The functionality is likely superseded by the '/api/has-application' route.
+  // const existing = applications.find(a => a.roll_no === roll_no && ['pending','approved'].includes(a.status));
+  // if (existing) return res.json({ applied: true, application: existing });
   return res.json({ applied: false });
 });
 // ------------------ Hostel Application Form ------------------
@@ -491,6 +503,67 @@ app.get("/my-complaints", async (req, res) => {
   }
 });
 
+// ================== Announcements API Routes ==================
+
+// ADMIN: POST - Create New Announcement
+app.post("/admin/api/announcements", checkAdmin, async (req, res) => {
+  try {
+    const { title, message } = req.body;
+    if (!title || !message) {
+      return res.status(400).json({ success: false, message: "Title and message content are required." });
+    }
+    
+    // Note: Your SQL table uses 'message', 'title', and relies on 'created_at' default.
+    await db.query(
+      "INSERT INTO announcements (title, message) VALUES (?, ?)",
+      [title, message]
+    );
+    res.json({ success: true, message: "Announcement posted successfully." });
+  } catch (err) {
+    console.error("Post Announcement Error:", err);
+    res.status(500).json({ success: false, message: "Server error posting announcement." });
+  }
+});
+
+// ADMIN/STUDENT: GET - Fetch All Announcements
+app.get("/api/announcements", (req, res) => {
+  // Check if *any* user is logged in
+  if (!req.session.user) {
+    return res.status(403).json({ success: false, message: "Access denied. Login required." });
+  }
+
+  try {
+    // Select all announcements, ordering by newest first
+    db.query("SELECT id, title, message, created_at FROM announcements ORDER BY created_at DESC")
+      .then(([rows]) => {
+        res.json({ success: true, announcements: rows });
+      })
+      .catch((err) => {
+        console.error("Fetch Announcements Error:", err);
+        res.status(500).json({ success: false, message: "Server error fetching announcements." });
+      });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Server error." });
+  }
+});
+
+// ADMIN: DELETE - Delete an Announcement
+app.delete("/admin/api/announcements/:id", checkAdmin, async (req, res) => {
+  try {
+    const announcementId = req.params.id;
+    const [result] = await db.query("DELETE FROM announcements WHERE id = ?", [announcementId]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: "Announcement not found." });
+    }
+    res.json({ success: true, message: "Announcement deleted successfully." });
+  } catch (err) {
+    console.error("Delete Announcement Error:", err);
+    res.status(500).json({ success: false, message: "Server error deleting announcement." });
+  }
+});
+
 // ------------------ Change Password ------------------
 app.post("/change-password", async (req, res) => {
   if (!req.session.user) {
@@ -539,33 +612,38 @@ app.post("/change-password", async (req, res) => {
 // ================== Admin Routes ==================
 
 // Admin Dashboard
-app.get("/admin/admin-dashboard", checkAdmin, (req, res) => {
+// MODIFIED: Added setNoCache middleware
+app.get("/admin/admin-dashboard", checkAdmin, setNoCache, (req, res) => {
   res.sendFile(path.join(__dirname, "public", "admin", "admindashboard.html"));
 });
 
-
-app.get("/admin/billing-summary", checkAdmin, (req, res) => {
+// MODIFIED: Added setNoCache middleware
+app.get("/admin/billing-summary", checkAdmin, setNoCache, (req, res) => {
   res.sendFile(path.join(__dirname, "public", "admin", "billing-summary.html"));
 });
 
 // ================== Serve billing-manage page ==================
-app.get("/admin/billing-manage", checkAdmin, (req, res) => {
+// MODIFIED: Added setNoCache middleware
+app.get("/admin/billing-manage", checkAdmin, setNoCache, (req, res) => {
   res.sendFile(path.join(__dirname, "public", "admin", "billing-manage.html"));
 });
 // ================== Room-Allocation page ==================
 
-app.get("/admin/rooms", checkAdmin, (req, res) => {
+// MODIFIED: Added setNoCache middleware
+app.get("/admin/rooms", checkAdmin, setNoCache, (req, res) => {
   res.sendFile(path.join(__dirname, "public", "admin", "rooms.html"));
 });
 // ================== students-manageme page ==================
 
-app.get("/admin/students", checkAdmin, (req, res) => {
+// MODIFIED: Added setNoCache middleware
+app.get("/admin/students", checkAdmin, setNoCache, (req, res) => {
   res.sendFile(path.join(__dirname, "public/admin/students.html"));
 });
 
 // ================== notices and circulars page ==================
 
-app.get("/admin/notices", checkAdmin, (req, res) => {
+// MODIFIED: Added setNoCache middleware
+app.get("/admin/notices", checkAdmin, setNoCache, (req, res) => {
   res.sendFile(path.join(__dirname, "public", "admin", "notices.html"));
 });
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -650,60 +728,87 @@ app.post("/admin/api/rooms/delete/:id", checkAdmin, async (req, res) => {
 });
 
 // ------------------ Allocate Student ------------------
+
+// ------------------ Allocate Student (FIXED with Transaction) ------------------
 app.post("/admin/api/allocate", checkAdmin, async (req, res) => {
   const { roll_no, room_id } = req.body;
   if (!roll_no || !room_id) return res.json({ success: false, message: "Missing data" });
-
+  
+  const conn = await db.getConnection();
   try {
-    // Check if student already allocated
-    const [existing] = await db.query(
-      "SELECT * FROM room_allocations WHERE roll_no=?",
-      [roll_no]
-    );
+    await conn.beginTransaction(); // Start Transaction
+
+    // 1. Check if student already allocated
+    const [existing] = await conn.query("SELECT * FROM room_allocations WHERE roll_no=?", [roll_no]);
     if (existing.length > 0) {
+      await conn.rollback();
       return res.json({ success: false, message: "Student already allocated. Vacate first." });
     }
 
-    // Check room capacity
-    const [roomRows] = await db.query("SELECT capacity FROM rooms WHERE id=?", [room_id]);
-    if (roomRows.length === 0) return res.json({ success: false, message: "Room not found" });
+    // 2. Check room capacity
+    const [roomRows] = await conn.query("SELECT capacity FROM rooms WHERE id=?", [room_id]);
+    if (roomRows.length === 0) {
+      await conn.rollback();
+      return res.json({ success: false, message: "Room not found" });
+    }
     const capacity = roomRows[0].capacity;
 
-    const [occupants] = await db.query("SELECT COUNT(*) AS count FROM room_allocations WHERE room_id=?", [room_id]);
-    if (occupants[0].count >= capacity) return res.json({ success: false, message: "Room full" });
+    const [occupants] = await conn.query("SELECT COUNT(*) AS count FROM room_allocations WHERE room_id=?", [room_id]);
+    if (occupants[0].count >= capacity) {
+      await conn.rollback();
+      return res.json({ success: false, message: "Room full" });
+    }
 
-    // Allocate
-    await db.query("INSERT INTO room_allocations (roll_no, room_id, allocated_at) VALUES (?,?,NOW())", [roll_no, room_id]);
+    // 3. Allocate student
+    await conn.query("INSERT INTO room_allocations (roll_no, room_id, allocated_at) VALUES (?,?,NOW())", [roll_no, room_id]);
 
-    // Update hostel_applications & users
-    const [roomInfo] = await db.query("SELECT hostel_name, room_no FROM rooms WHERE id=?", [room_id]);
+    // 4. Update hostel_applications & users profile with room info
+    const [roomInfo] = await conn.query("SELECT hostel_name, room_no FROM rooms WHERE id=?", [room_id]);
     const { hostel_name, room_no } = roomInfo[0];
-    await db.query("UPDATE hostel_applications SET hostel_name=?, room_no=? WHERE roll_no=?", [hostel_name, room_no, roll_no]);
-    await db.query("UPDATE users SET hostel_name=?, room_no=? WHERE roll_no=?", [hostel_name, room_no, roll_no]);
-
+    await conn.query("UPDATE hostel_applications SET hostel_name=?, room_no=? WHERE roll_no=?", [hostel_name, room_no, roll_no]);
+    await conn.query("UPDATE users SET hostel_name=?, room_no=? WHERE roll_no=?", [hostel_name, room_no, roll_no]);
+    
+    await conn.commit(); // Commit all changes
     res.json({ success: true, message: "Student allocated" });
   } catch (err) {
-    console.error(err);
-    res.json({ success: false, message: "Server error" });
+    await conn.rollback(); // Rollback on any error
+    console.error("Room Allocation Error:", err);
+    res.status(500).json({ success: false, message: "Server error during allocation. Check console logs." });
+  } finally {
+    if (conn) conn.release();
   }
 });
-
 // ------------------ Vacate Student ------------------
+// ------------------ Vacate Student (FIXED with Transaction and simplified DELETE) ------------------
 app.post("/admin/api/allocate/vacate", checkAdmin, async (req, res) => {
-  const { roll_no, room_id } = req.body;
-  if (!roll_no || !room_id) return res.json({ success: false, message: "Missing data" });
+  const { roll_no } = req.body;
+  if (!roll_no) return res.json({ success: false, message: "Missing roll number" });
 
+  const conn = await db.getConnection();
   try {
-    await db.query("DELETE FROM room_allocations WHERE roll_no=? AND room_id=?", [roll_no, room_id]);
-    await db.query("UPDATE hostel_applications SET hostel_name=NULL, room_no=NULL WHERE roll_no=?", [roll_no]);
-    await db.query("UPDATE users SET hostel_name=NULL, room_no=NULL WHERE roll_no=?", [roll_no]);
-    res.json({ success: true, message: "Student vacated" });
+    await conn.beginTransaction(); // Start Transaction
+
+    // 1. Delete allocation for the student using ONLY roll_no (most reliable)
+    const [deleteResult] = await conn.query("DELETE FROM room_allocations WHERE roll_no=?", [roll_no]);
+    
+    if (deleteResult.affectedRows === 0) {
+        console.log(`[VACATE WARNING] Roll No ${roll_no} had no existing room allocation, proceeding to clear user tables.`);
+    }
+
+    // 2. Update hostel_applications & users to clear room info
+    await conn.query("UPDATE hostel_applications SET hostel_name=NULL, room_no=NULL WHERE roll_no=?", [roll_no]);
+    await conn.query("UPDATE users SET hostel_name=NULL, room_no=NULL WHERE roll_no=?", [roll_no]);
+    
+    await conn.commit(); // Commit all changes
+    res.json({ success: true, message: "Student successfully vacated." });
   } catch (err) {
-    console.error(err);
-    res.json({ success: false, message: "Server error" });
+    await conn.rollback(); // Rollback on any error
+    console.error("Room Vacate Error:", err);
+    res.status(500).json({ success: false, message: "Server error during vacation. Check console logs." });
+  } finally {
+    if (conn) conn.release();
   }
 });
-
 
 
 
@@ -743,21 +848,46 @@ app.get('/admin/applications/:id', checkAdmin, async (req, res) => {
 });
 
 // --- Approve application ---
+// --- Approve application (FINAL FIX) ---
 app.post('/admin/applications/:id/approve', checkAdmin, async (req, res) => {
+  const conn = await db.getConnection(); 
   try {
+    await conn.beginTransaction();
+
     const id = req.params.id;
-    const { payment } = req.body;
-    await db.query(
-      "UPDATE hostel_applications SET approval_status='Approved', payment_status=? WHERE application_id=?",
-      [payment || 0, id]
+
+    // 1. FIX: Fetch the necessary student details, selecting 'contact' (the correct column name) instead of 'phone'.
+    const [appRows] = await conn.query('SELECT roll_no, full_name, email, contact FROM hostel_applications WHERE application_id=?', [id]);
+    
+    if (appRows.length === 0) {
+      await conn.rollback();
+      return res.json({ success: false, message: 'Application not found' });
+    }
+    const application = appRows[0];
+
+    // 2. Update hostel_applications status to Approved.
+    await conn.query(
+      "UPDATE hostel_applications SET approval_status='Approved', payment_status='Pending' WHERE application_id=?",
+      [id] 
     );
-    res.json({ success: true, message: 'Application approved' });
+
+    // 3. FIX: Update the student's main profile in the users table.
+    // We use application.contact to update the users.phone column.
+    await conn.query(
+      "UPDATE users SET full_name=?, email=?, phone=? WHERE roll_no=?",
+      [application.full_name, application.email, application.contact, application.roll_no]
+    );
+
+    await conn.commit();
+    res.json({ success: true, message: 'Application approved and user profile updated.' });
   } catch(err){
-    console.error(err);
-    res.json({ success: false, message: 'Server error' });
+    await conn.rollback();
+    console.error("Application Approval Error:", err);
+    res.status(500).json({ success: false, message: 'Server error during approval process. Please check console for details.' });
+  } finally {
+    if (conn) conn.release();
   }
 });
-
 // --- Reject application ---
 app.post('/admin/applications/:id/reject', checkAdmin, async (req, res) => {
   try {
@@ -1191,7 +1321,10 @@ app.delete("/api/complaints/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to delete complaint" });
   }
 });
-// Logout route
+
+// NOTE: The following duplicate and conflicting /logout routes have been REMOVED:
+/*
+// Logout route (REMOVED: redirects to /login)
 app.get("/logout", (req, res) => {
   // Destroy the session
   req.session.destroy(err => {
@@ -1203,26 +1336,16 @@ app.get("/logout", (req, res) => {
     res.redirect("/login");
   });
 });
-// ================== Logout ==================
+
+// ================== Logout ================== (REMOVED: duplicate)
 app.get("/logout", (req, res) => {
   req.session.destroy((err) => {
     if (err) console.error(err);
     res.sendFile(path.join(__dirname, "public", "logout.html"));
   });
 });
-
+*/
 
 //============= Start Server ==================
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`✅ Server running at http://localhost:${PORT}`));
-
-
-
-
-
-
-
-
-
-
-

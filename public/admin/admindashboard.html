@@ -206,22 +206,13 @@ h2 {
 </footer>
 
 <script>
-  // Function to show a popup message
-  function showNotification(message) {
-    const notification = document.getElementById('notification');
-    const msg = document.getElementById('notification-message');
-    msg.textContent = message;
-    notification.style.display = 'block';
-
-    setTimeout(() => {
-      notification.style.display = 'none';
-    }, 5000);
-  }
-
-  function closeNotification() {
-    document.getElementById('notification').style.display = 'none';
-  }
-
+  (function () {
+    window.addEventListener('pageshow', function (event) {
+      if (event.persisted) {
+        window.location.href = '/';
+      }
+    });
+  })();
 
 
 </script>
