@@ -728,85 +728,58 @@ app.post("/admin/api/rooms/delete/:id", checkAdmin, async (req, res) => {
 });
 
 // ------------------ Allocate Student ------------------
-
-// ------------------ Allocate Student (FIXED with Transaction) ------------------
 app.post("/admin/api/allocate", checkAdmin, async (req, res) => {
   const { roll_no, room_id } = req.body;
   if (!roll_no || !room_id) return res.json({ success: false, message: "Missing data" });
-  
-  const conn = await db.getConnection();
-  try {
-    await conn.beginTransaction(); // Start Transaction
 
-    // 1. Check if student already allocated
-    const [existing] = await conn.query("SELECT * FROM room_allocations WHERE roll_no=?", [roll_no]);
+  try {
+    // Check if student already allocated
+    const [existing] = await db.query(
+      "SELECT * FROM room_allocations WHERE roll_no=?",
+      [roll_no]
+    );
     if (existing.length > 0) {
-      await conn.rollback();
       return res.json({ success: false, message: "Student already allocated. Vacate first." });
     }
 
-    // 2. Check room capacity
-    const [roomRows] = await conn.query("SELECT capacity FROM rooms WHERE id=?", [room_id]);
-    if (roomRows.length === 0) {
-      await conn.rollback();
-      return res.json({ success: false, message: "Room not found" });
-    }
+    // Check room capacity
+    const [roomRows] = await db.query("SELECT capacity FROM rooms WHERE id=?", [room_id]);
+    if (roomRows.length === 0) return res.json({ success: false, message: "Room not found" });
     const capacity = roomRows[0].capacity;
 
-    const [occupants] = await conn.query("SELECT COUNT(*) AS count FROM room_allocations WHERE room_id=?", [room_id]);
-    if (occupants[0].count >= capacity) {
-      await conn.rollback();
-      return res.json({ success: false, message: "Room full" });
-    }
+    const [occupants] = await db.query("SELECT COUNT(*) AS count FROM room_allocations WHERE room_id=?", [room_id]);
+    if (occupants[0].count >= capacity) return res.json({ success: false, message: "Room full" });
 
-    // 3. Allocate student
-    await conn.query("INSERT INTO room_allocations (roll_no, room_id, allocated_at) VALUES (?,?,NOW())", [roll_no, room_id]);
+    // Allocate
+    await db.query("INSERT INTO room_allocations (roll_no, room_id, allocated_at) VALUES (?,?,NOW())", [roll_no, room_id]);
 
-    // 4. Update hostel_applications & users profile with room info
-    const [roomInfo] = await conn.query("SELECT hostel_name, room_no FROM rooms WHERE id=?", [room_id]);
+    // Update hostel_applications & users
+    const [roomInfo] = await db.query("SELECT hostel_name, room_no FROM rooms WHERE id=?", [room_id]);
     const { hostel_name, room_no } = roomInfo[0];
-    await conn.query("UPDATE hostel_applications SET hostel_name=?, room_no=? WHERE roll_no=?", [hostel_name, room_no, roll_no]);
-    await conn.query("UPDATE users SET hostel_name=?, room_no=? WHERE roll_no=?", [hostel_name, room_no, roll_no]);
-    
-    await conn.commit(); // Commit all changes
+    await db.query("UPDATE hostel_applications SET hostel_name=?, room_no=? WHERE roll_no=?", [hostel_name, room_no, roll_no]);
+    await db.query("UPDATE users SET hostel_name=?, room_no=? WHERE roll_no=?", [hostel_name, room_no, roll_no]);
+
     res.json({ success: true, message: "Student allocated" });
   } catch (err) {
-    await conn.rollback(); // Rollback on any error
-    console.error("Room Allocation Error:", err);
-    res.status(500).json({ success: false, message: "Server error during allocation. Check console logs." });
-  } finally {
-    if (conn) conn.release();
+    console.error(err);
+    res.json({ success: false, message: "Server error" });
   }
 });
+
+
 // ------------------ Vacate Student ------------------
-// ------------------ Vacate Student (FIXED with Transaction and simplified DELETE) ------------------
 app.post("/admin/api/allocate/vacate", checkAdmin, async (req, res) => {
-  const { roll_no } = req.body;
-  if (!roll_no) return res.json({ success: false, message: "Missing roll number" });
+  const { roll_no, room_id } = req.body;
+  if (!roll_no || !room_id) return res.json({ success: false, message: "Missing data" });
 
-  const conn = await db.getConnection();
   try {
-    await conn.beginTransaction(); // Start Transaction
-
-    // 1. Delete allocation for the student using ONLY roll_no (most reliable)
-    const [deleteResult] = await conn.query("DELETE FROM room_allocations WHERE roll_no=?", [roll_no]);
-    
-    if (deleteResult.affectedRows === 0) {
-        console.log(`[VACATE WARNING] Roll No ${roll_no} had no existing room allocation, proceeding to clear user tables.`);
-    }
-
-    // 2. Update hostel_applications & users to clear room info
-    await conn.query("UPDATE hostel_applications SET hostel_name=NULL, room_no=NULL WHERE roll_no=?", [roll_no]);
-    await conn.query("UPDATE users SET hostel_name=NULL, room_no=NULL WHERE roll_no=?", [roll_no]);
-    
-    await conn.commit(); // Commit all changes
-    res.json({ success: true, message: "Student successfully vacated." });
+    await db.query("DELETE FROM room_allocations WHERE roll_no=? AND room_id=?", [roll_no, room_id]);
+    await db.query("UPDATE hostel_applications SET hostel_name=NULL, room_no=NULL WHERE roll_no=?", [roll_no]);
+    await db.query("UPDATE users SET hostel_name=NULL, room_no=NULL WHERE roll_no=?", [roll_no]);
+    res.json({ success: true, message: "Student vacated" });
   } catch (err) {
-    await conn.rollback(); // Rollback on any error
-    console.error("Room Vacate Error:", err);
-    res.status(500).json({ success: false, message: "Server error during vacation. Check console logs." });
-  } finally {
-    if (conn) conn.release();
+    console.error(err);
+    res.json({ success: false, message: "Server error" });
   }
 });
 
