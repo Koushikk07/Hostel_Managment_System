@@ -1,98 +1,248 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Application Details</title>
-<style>
-body { font-family: Arial, sans-serif; background:#f5f5f5; margin:0; padding:0; }
-header { background:#007bff; color:#fff; padding:16px; text-align:center; }
-h1 { margin:0; font-size:24px; }
-main { padding:24px; }
-.details { background:#fff; padding:20px; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.1); max-width:800px; margin:auto; }
-.details img { max-width:200px; margin:8px 0; display:block; }
-button { padding:10px 16px; border:none; border-radius:6px; cursor:pointer; margin:5px; }
-.approve-btn { background:#28a745; color:#fff; }
-.reject-btn { background:#dc3545; color:#fff; }
-.back-btn { background:#6c757d; color:#fff; }
-</style>
-</head>
-<body>
-<header><h1>Application Details</h1></header>
-<main>
-  <div class="details" id="appDetails">Loading...</div>
-</main>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Application Details</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #f5f5f5;
+        margin: 0;
+        padding: 0;
+      }
+      header {
+        background: #007bff;
+        color: #fff;
+        padding: 16px;
+        text-align: center;
+      }
+      h1 {
+        margin: 0;
+        font-size: 24px;
+      }
+      main {
+        padding: 24px;
+      }
+      .details {
+        background: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        max-width: 800px;
+        margin: auto;
+      }
+      .details img {
+        max-width: 200px;
+        margin: 8px 0;
+        display: block;
+      }
+      button {
+        padding: 10px 16px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        margin: 5px;
+      }
+      .approve-btn {
+        background: #28a745;
+        color: #fff;
+      }
+      .reject-btn {
+        background: #dc3545;
+        color: #fff;
+      }
+      .back-btn {
+        background: #6c757d;
+        color: #fff;
+      }
+      header {
+        background: #007bff;
+        color: white;
+        padding: 16px 24px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+      }
+      header h1 {
+        margin: 0;
+        font-size: 24px;
+        flex: 1;
+        text-align: center;
+      }
+      header a {
+        position: absolute;
+        left: 24px;
+        top: 50%;
+        transform: translateY(-50%);
+        text-decoration: none;
+        background: white;
+        color: #007bff;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-weight: bold;
+        transition: background 0.3s, color 0.3s;
+      }
+      header a:hover {
+        background: #0056b3;
+        color: white;
+      }
 
-<script>
-function getQueryParam(param) {
-  const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get(param);
-}
+      .container {
+        width: 80%;
+        margin: 20px auto;
+      }
 
-const appId = getQueryParam('id');
+      .controls {
+        text-align: right;
+        margin-bottom: 15px;
+      }
 
-async function loadApplication() {
-  try {
-    const res = await fetch(`/admin/applications/${appId}`);
-    const data = await res.json();
-    if(!data.success) { alert(data.message); return; }
+      button {
+        background-color: #003366;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+        margin-left: 10px;
+      }
 
-    const a = data.application;
-    let html = `<h2>${a.full_name} (${a.roll_no})</h2>`;
-    html += `<p><strong>Application ID:</strong> ${a.application_id}</p>`;
-    html += `<p><strong>Father Name:</strong> ${a.father_name}</p>`;
-    html += `<p><strong>Profession:</strong> ${a.profession||'-'}</p>`;
-    html += `<p><strong>Income:</strong> ${a.income||'-'}</p>`;
-    html += `<p><strong>DOB:</strong> ${a.dob}</p>`;
-    html += `<p><strong>Birth Place:</strong> ${a.birth_place||'-'}</p>`;
-    html += `<p><strong>Aadhaar:</strong> ${a.aadhaar||'-'}</p>`;
-    html += `<p><strong>Blood Group:</strong> ${a.blood_group||'-'}</p>`;
-    html += `<p><strong>Food Preference:</strong> ${a.food_preference||'-'}</p>`;
-    html += `<p><strong>Course:</strong> ${a.course||'-'}</p>`;
-    html += `<p><strong>Branch:</strong> ${a.branch||'-'}</p>`;
-    html += `<p><strong>Year:</strong> ${a.year||'-'}</p>`;
-    html += `<p><strong>Application Type:</strong> ${a.application_type||'-'}</p>`;
-    html += `<p><strong>Approval Status:</strong> ${a.approval_status}</p>`;
-    html += `<p><strong>Rejection Reason:</strong> ${a.rejection_reason||'-'}</p>`;
-    html += `<p><strong>Payment Status:</strong> ${a.payment_status||'-'}</p>`;
-    
-    if(a.student_photo) html += `<p><strong>Student Photo:</strong><br><img src="${a.student_photo}" alt="Student Photo"></p>`;
-    if(a.certificate) html += `<p><strong>Certificate:</strong><br><img src="${a.certificate}" alt="Certificate"></p>`;
+      button:hover {
+        background-color: #0055aa;
+      }
 
-    html += `<button class="back-btn" onclick="window.history.back()">Back</button>`;
+      .announcement-box {
+        background-color: white;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        position: relative;
+      }
 
-    if(a.approval_status==='Pending'){
-      html += `<button class="approve-btn" onclick="approveApplication(${a.application_id})">Approve</button>`;
-      html += `<button class="reject-btn" onclick="rejectApplication(${a.application_id})">Reject</button>`;
-    }
+      .announcement-box h3 {
+        color: #003366;
+        margin-bottom: 5px;
+      }
 
-    document.getElementById('appDetails').innerHTML = html;
+      .announcement-box p {
+        color: #333;
+        margin: 0;
+      }
 
-  } catch(err){ console.error(err); }
-}
+      .remove-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background-color: #cc0000;
+      }
 
-async function approveApplication(id) {
-  const payment = prompt("Enter payment amount (optional)","0");
-  const res = await fetch(`/admin/applications/${id}/approve`,{
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({payment: parseFloat(payment)||0})
-  });
-  const data = await res.json();
-  alert(data.message); loadApplication();
-}
+      .remove-btn:hover {
+        background-color: #ff3333;
+      }
+    </style>
+  </head>
+  <body>
+    <header><h1>Application Details</h1><a href="admindashboard.html">back</a></header>
+    <main>
+      <div class="details" id="appDetails">Loading...</div>
+    </main>
 
-async function rejectApplication(id) {
-  const reason = prompt("Enter rejection reason:");
-  if(!reason) return alert("Rejection reason required");
-  const res = await fetch(`/admin/applications/${id}/reject`,{
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({reason})
-  });
-  const data = await res.json();
-  alert(data.message); loadApplication();
-}
+    <script>
+      function getQueryParam(param) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(param);
+      }
 
-window.onload = loadApplication;
-</script>
-</body>
+      const appId = getQueryParam("id");
+
+      async function loadApplication() {
+        try {
+          const res = await fetch(`/admin/applications/${appId}`);
+          const data = await res.json();
+          if (!data.success) {
+            alert(data.message);
+            return;
+          }
+
+          const a = data.application;
+          let html = `<h2>${a.full_name} (${a.roll_no})</h2>`;
+          html += `<p><strong>Application ID:</strong> ${a.application_id}</p>`;
+          html += `<p><strong>Father Name:</strong> ${a.father_name}</p>`;
+          html += `<p><strong>Profession:</strong> ${a.profession || "-"}</p>`;
+          html += `<p><strong>Income:</strong> ${a.income || "-"}</p>`;
+          html += `<p><strong>DOB:</strong> ${a.dob}</p>`;
+          html += `<p><strong>Birth Place:</strong> ${
+            a.birth_place || "-"
+          }</p>`;
+          html += `<p><strong>Aadhaar:</strong> ${a.aadhaar || "-"}</p>`;
+          html += `<p><strong>Blood Group:</strong> ${
+            a.blood_group || "-"
+          }</p>`;
+          html += `<p><strong>Food Preference:</strong> ${
+            a.food_preference || "-"
+          }</p>`;
+          html += `<p><strong>Course:</strong> ${a.course || "-"}</p>`;
+          html += `<p><strong>Branch:</strong> ${a.branch || "-"}</p>`;
+          html += `<p><strong>Year:</strong> ${a.year || "-"}</p>`;
+          html += `<p><strong>Application Type:</strong> ${
+            a.application_type || "-"
+          }</p>`;
+          html += `<p><strong>Approval Status:</strong> ${a.approval_status}</p>`;
+          html += `<p><strong>Rejection Reason:</strong> ${
+            a.rejection_reason || "-"
+          }</p>`;
+          html += `<p><strong>Payment Status:</strong> ${
+            a.payment_status || "-"
+          }</p>`;
+
+          if (a.student_photo)
+            html += `<p><strong>Student Photo:</strong><br><img src="${a.student_photo}" alt="Student Photo"></p>`;
+          if (a.certificate)
+            html += `<p><strong>Certificate:</strong><br><img src="${a.certificate}" alt="Certificate"></p>`;
+
+          html += `<button class="back-btn" onclick="window.history.back()">Back</button>`;
+
+          if (a.approval_status === "Pending") {
+            html += `<button class="approve-btn" onclick="approveApplication(${a.application_id})">Approve</button>`;
+            html += `<button class="reject-btn" onclick="rejectApplication(${a.application_id})">Reject</button>`;
+          }
+
+          document.getElementById("appDetails").innerHTML = html;
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      async function approveApplication(id) {
+        const payment = prompt("Enter payment amount (optional)", "0");
+        const res = await fetch(`/admin/applications/${id}/approve`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ payment: parseFloat(payment) || 0 }),
+        });
+        const data = await res.json();
+        alert(data.message);
+        loadApplication();
+      }
+
+      async function rejectApplication(id) {
+        const reason = prompt("Enter rejection reason:");
+        if (!reason) return alert("Rejection reason required");
+        const res = await fetch(`/admin/applications/${id}/reject`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reason }),
+        });
+        const data = await res.json();
+        alert(data.message);
+        loadApplication();
+      }
+
+      window.onload = loadApplication;
+    </script>
+  </body>
 </html>

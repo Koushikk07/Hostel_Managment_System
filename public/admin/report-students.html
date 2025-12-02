@@ -6,9 +6,46 @@
 <title>Students Report</title>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<style>
+header {
+  background: #007bff;
+  color: white;
+  padding: 16px 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+header h1 {
+  margin: 0;
+  font-size: 24px;
+  flex: 1;
+  text-align: center;
+}
+header a {
+  position: absolute;
+  left: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  text-decoration: none;
+  background: white;
+  color: #007bff;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: bold;
+  transition: background 0.3s, color 0.3s;
+}
+header a:hover {
+  background: #0056b3;
+ color: white;
+}
+</style>
 </head>
 <body class="p-3">
-<h2>Students Report</h2>
+<header>
+    <h1>Students Report</h1>
+    <a href="admindashboard.html">Back</a>
+  </header>
 
 <div class="row mb-3">
   <div class="col-md-3"><input type="text" id="searchInput" class="form-control" placeholder="Search by name or roll"></div>

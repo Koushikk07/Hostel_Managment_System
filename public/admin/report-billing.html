@@ -6,9 +6,52 @@
 <title>Billing Report</title>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<style>
+  body{
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f5f5f5;
+    margin: 0;
+    padding: 0;
+  }
+  header {
+  background: #007bff;
+  color: white;
+  padding: 16px 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+header h1 {
+  margin: 0;
+  font-size: 24px;
+  flex: 1;
+  text-align: center;
+}
+header a {
+  position: absolute;
+  left: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  text-decoration: none;
+  background: white;
+  color: #007bff;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: bold;
+  transition: background 0.3s, color 0.3s;
+}
+header a:hover {
+  background: #0056b3;
+  color: white;
+}
+</style>
 </head>
 <body class="p-3">
-<h2>Billing Report</h2>
+<header>
+    <h1>Billing Report</h1>
+    <a href="admindashboard.html">Back</a>
+ </header>
 
 <div class="mb-3 text-end">
   <button class="btn btn-success" onclick="exportCSV()">Export CSV</button>

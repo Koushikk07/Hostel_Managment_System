@@ -31,9 +31,45 @@
   .education-table td input { width:95%; padding:6px 8px; border:1px solid #ccc; border-radius:5px; font-size:14px; }
   .education-table td input:focus { outline:none; border-color:#007bff; box-shadow:0 0 5px rgba(0,123,255,0.5); }
   .hidden { display:none; }
+  header {
+  background: #007bff;
+  color: white;
+  padding: 16px 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+header h1 {
+  margin: 0;
+  font-size: 24px;
+  flex: 1;
+  text-align: center;
+}
+header a {
+  position: absolute;
+  left: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  text-decoration: none;
+  background: white;
+  color: #007bff;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: bold;
+  transition: background 0.3s, color 0.3s;
+}
+header a:hover {
+  background: #0056b3;
+ color: white;
+}
 </style>
 </head>
 <body>
+  <header>
+  <h1>Hostel Form</h1>
+   <a href="dashboard.html">Back</a>
+</header>
 
 <div class="form-container" id="form-container">
   <div class="form-header">

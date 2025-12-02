@@ -11,11 +11,47 @@ body { background:#f0f2f5; }
 .form-section { display:none; background:#fff; padding:20px; border-radius:10px; margin-top:20px; max-height:90vh; overflow-y:auto; }
 h5 { color:#007bff; margin-top:15px; }
 img.preview-photo { width:60px; height:70px; object-fit:cover; border:1px solid #ccc; border-radius:5px; }
+header {
+  background: #007bff;
+  color: white;
+  padding: 16px 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+header h1 {
+  margin: 0;
+  font-size: 24px;
+  flex: 1;
+  text-align: center;
+}
+header a {
+  position: absolute;
+  left: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  text-decoration: none;
+  background: white;
+  color: #007bff;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: bold;
+  transition: background 0.3s, color 0.3s;
+}
+header a:hover {
+  background: #0056b3;
+ color: white;
+}
 </style>
 </head>
 <body>
+  <header>
+    <h1>Student Management</h1>
+    <a href="admindashboard.html">Back</a>
+  </header>
 <div class="container">
-  <h2>Student Management</h2>
+  
   <div class="row mb-3">
     <div class="col-md-6"><button class="btn btn-success" onclick="showAddForm()">Add New Student</button></div>
     <div class="col-md-6 text-end">

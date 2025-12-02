@@ -24,10 +24,45 @@ th{background:#007bff;color:#fff}
 .modal input, .modal select{width:100%;padding:6px;margin:4px 0 10px 0;border:1px solid #ccc;border-radius:4px;}
 .modal label{font-weight:bold;}
 .modal-footer{text-align:right;}
+header {
+  background: #007bff;
+  color: white;
+  padding: 16px 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+header h1 {
+  margin: 0;
+  font-size: 24px;
+  flex: 1;
+  text-align: center;
+}
+header a {
+  position: absolute;
+  left: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  text-decoration: none;
+  background: white;
+  color: #007bff;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: bold;
+  transition: background 0.3s, color 0.3s;
+}
+header a:hover {
+  background: #0056b3;
+  color: white;
+}
 </style>
 </head>
 <body>
-<h2>Billing Summary</h2>
+<header>
+  <h1>Billing Summary</h1>
+  <a href="admindashboard.html">back</a>
+</header>
 <button class="button" onclick="loadBilling()">Reload All</button>
 <button class="button" onclick="openModal()">Add Billing</button>
 <input id="searchInput" type="text" placeholder="Search by roll or name" style="margin-left:8px;padding:8px;border-radius:6px;border:1px solid #ccc" oninput="debouncedSearch()">

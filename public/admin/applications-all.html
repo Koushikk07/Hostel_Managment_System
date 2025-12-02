@@ -7,7 +7,7 @@
 <title>Applications Dashboard</title>
 <style>
 body { font-family: Arial, sans-serif; background: #f5f5f5; margin:0; padding:0; }
-header { background:#007bff; color:#fff; padding:16px; text-align:center; }
+
 h1 { margin:0; font-size:24px; }
 main { padding:24px; }
 .filter-buttons { margin-bottom:16px; display:flex; gap:8px; flex-wrap:wrap; }
@@ -22,10 +22,98 @@ button:hover { opacity:0.9; }
 .view-btn { background:#17a2b8; color:#fff; }
 .approve-btn { background:#28a745; color:#fff; }
 .reject-btn { background:#dc3545; color:#fff; }
+header {
+  background: #007bff;
+  color: white;
+  padding: 16px 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+header h1 {
+  margin: 0;
+  font-size: 24px;
+  flex: 1;
+  text-align: center;
+}
+header a {
+  position: absolute;
+  left: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  text-decoration: none;
+  background: white;
+  color: #007bff;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: bold;
+  transition: background 0.3s, color 0.3s;
+}
+header a:hover {
+  background: #0056b3;
+  color: white;
+}
+
+      .container {
+        width: 80%;
+        margin: 20px auto;
+      }
+
+      .controls {
+        text-align: right;
+        margin-bottom: 15px;
+      }
+
+      button {
+        background-color: #003366;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+        margin-left: 10px;
+      }
+
+      button:hover {
+        background-color: #0055aa;
+      }
+
+      .announcement-box {
+        background-color: white;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        position: relative;
+      }
+
+      .announcement-box h3 {
+        color: #003366;
+        margin-bottom: 5px;
+      }
+
+      .announcement-box p {
+        color: #333;
+        margin: 0;
+      }
+
+      .remove-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background-color: #cc0000;
+      }
+
+      .remove-btn:hover {
+        background-color: #ff3333;
+      }
 </style>
 </head>
 <body>
-<header><h1>Applications Dashboard</h1></header>
+<header><h1>Applications Dashboard</h1>
+<a href="admindashboard.html">back</a></header>
 <main>
   <h2 id="pageTitle">All Applications</h2>
   <div class="filter-buttons" id="filterButtons"></div>

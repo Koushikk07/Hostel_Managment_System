@@ -10,10 +10,42 @@ header{background:#007bff;color:#fff;padding:16px;text-align:center}
 table{border-collapse:collapse;width:100%;margin:16px 0}
 th,td{border:1px solid #ccc;padding:8px;text-align:left}
 th{background:#007bff;color:#fff}
+header {
+  background: #007bff;
+  color: white;
+  padding: 16px 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+header h1 {
+  margin: 0;
+  font-size: 24px;
+  flex: 1;
+  text-align: center;
+}
+header a {
+  position: absolute;
+  left: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  text-decoration: none;
+  background: white;
+  color: #007bff;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: bold;
+  transition: background 0.3s, color 0.3s;
+}
+header a:hover {
+  background: #0056b3;
+ color: white;
+}
 </style>
 </head>
 <body>
-<header><h1>Profile Details</h1></header>
+<header><h1>Profile Details</h1><a href="dashboard.html">back</a></header>
 <main>
 <div id="profile-container">Loading...</div>
 </main>

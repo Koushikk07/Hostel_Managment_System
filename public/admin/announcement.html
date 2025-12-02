@@ -12,13 +12,38 @@
         padding: 0;
       }
 
-      h1 {
-        text-align: center;
-        background-color: #003366;
-        color: white;
-        padding: 15px;
-        margin: 0;
-      }
+    header {
+  background: #007bff;
+  color: white;
+  padding: 16px 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+header h1 {
+  margin: 0;
+  font-size: 24px;
+  flex: 1;
+  text-align: center;
+}
+header a {
+  position: absolute;
+  left: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  text-decoration: none;
+  background: white;
+  color: #007bff;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: bold;
+  transition: background 0.3s, color 0.3s;
+}
+header a:hover {
+  background: #0056b3;
+  color: white;
+}
 
       .container {
         width: 80%;
@@ -77,7 +102,10 @@
     </style>
   </head>
   <body>
-    <h1>Hostel Announcements</h1>
+    <header>
+      <h1>Hostel Announcements</h1>
+      <a href="admindashboard.html">back</a>
+    </header>
 
     <div class="container">
       <div class="controls">
@@ -85,35 +113,7 @@
       </div>
 
       <div id="announcements">
-        <div class="announcement-box">
-          <h3>Notice 1: Maintenance Work</h3>
-          <p>
-            Water supply will be off from 9 AM to 12 PM tomorrow due to
-            maintenance.
-          </p>
-          <button class="remove-btn" onclick="removeAnnouncement(this)">
-            Remove
-          </button>
-        </div>
-
-        <div class="announcement-box">
-          <h3>Notice 2: Mess Timings</h3>
-          <p>Mess dinner timing changed to 7:00 PM - 9:00 PM from next week.</p>
-          <button class="remove-btn" onclick="removeAnnouncement(this)">
-            Remove
-          </button>
-        </div>
-
-        <div class="announcement-box">
-          <h3>Notice 3: Fee Payment</h3>
-          <p>
-            Students are requested to pay hostel fees before the 25th of this
-            month.
-          </p>
-          <button class="remove-btn" onclick="removeAnnouncement(this)">
-            Remove
-          </button>
-        </div>
+        
       </div>
     </div>
 

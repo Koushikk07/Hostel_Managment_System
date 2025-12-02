@@ -12,10 +12,42 @@ th,td{border:1px solid #ccc;padding:8px;text-align:center}
 th{background:#007bff;color:white}
 h2{color:#007bff;margin-top:24px}
 .total-row{font-weight:bold;background:#e0e0e0}
+header {
+  background: #007bff;
+  color: white;
+  padding: 16px 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+header h1 {
+  margin: 0;
+  font-size: 24px;
+  flex: 1;
+  text-align: center;
+}
+header a {
+  position: absolute;
+  left: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  text-decoration: none;
+  background: white;
+  color: #007bff;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: bold;
+  transition: background 0.3s, color 0.3s;
+}
+header a:hover {
+  background: #0056b3;
+ color: white;
+}
 </style>
 </head>
 <body>
-<header><h1>Finance Details</h1></header>
+<header><h1>Finance Details</h1><a href="dashboard.html">back</a></header>
 <main>
 <div id="finance-container">Loading...</div>
 </main>
