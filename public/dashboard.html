@@ -7,6 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache" />
 <meta http-equiv="Expires" content="0" />
 <title>Student Dashboard</title>
+<link rel="icon" type="image/jpeg" href="logo.jpeg">
 <style>
 body { font-family: Arial, sans-serif; background: #f5f5f5; margin:0; padding:0; }
 header {
@@ -113,7 +114,7 @@ h2 {
     <div class="dropdown-btn">Profile &#9662;</div>
     <div class="dropdown-content">
       <a href="profile.html">View Profile</a>
-      <a href="change-password.html">Change Password</a>
+      <a href="forgotpassword.html">Change Password</a>
     </div>
   </div>
   <div class="dropdown">
@@ -136,19 +137,47 @@ h2 {
 </nav>
 
 <main>
-  <h2>Welcome, <span id="student-name">Loading...</span></h2>
-  <p>Roll No: <span id="student-roll"></span></p>
-  <p>Room: <span id="student-room">Not allocated</span></p>
+<h2>Welcome, <span id="student-name">Loading...</span></h2>
+<p>Roll No: <span id="student-roll"></span></p>
+<p>Hostel: <span id="student-hostel">Not allocated</span></p> <p>Room: <span id="student-room">Not allocated</span></p>
 </main>
 
 <script>
-(function () {
-    window.addEventListener('pageshow', function (event) {
-      if (event.persisted) {
-        window.location.href = '/';
-      }
-    });
-  })();
+async function loadStudentDetails() {
+  try {
+    // 1. Fetch data from the server API
+    const response = await fetch('/api/student/details', { credentials: 'same-origin' }); 
+    const data = await response.json();
+
+    if (data.success) {
+      // 2. Populate basic user info
+      document.getElementById('student-name').textContent = data.name;
+      document.getElementById('student-roll').textContent = data.roll;
+      
+      // 3. Get the HTML elements for Hostel and Room
+      const hostelElement = document.getElementById('student-hostel');
+      const roomElement = document.getElementById('student-room');
+
+      // 4. Update the content (the "basic man" way)
+      // If data.hostel is a valid string, use it; otherwise, display 'Not allocated'.
+      hostelElement.textContent = data.hostel || 'Not allocated'; 
+      roomElement.textContent = data.room || 'Not allocated';
+      
+      // OPTIONAL: Hide "Not allocated" for room if hostel is allocated but room isn't explicitly set
+      // if (data.hostel && !data.room) { roomElement.textContent = 'Room Pending Allocation'; }
+      
+    } else {
+      console.error('Failed to load user data:', data.message);
+      document.getElementById('student-name').textContent = 'Error loading data';
+    }
+  } catch (error) {
+    console.error('Network or server error:', error);
+    document.getElementById('student-name').textContent = 'Network Error';
+  }
+}
+
+// Ensure this function runs when the page loads
+document.addEventListener('DOMContentLoaded', loadStudentDetails);
 </script>
 </body>
 </html>

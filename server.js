@@ -219,6 +219,53 @@ app.post("/register/verify-otp", async (req, res) => {
     res.json({ success: false, message: "Server error" });
   }
 });
+// ================== PASSWORD RESET ROUTE ==================
+app.post("/forgot-password", async (req, res) => {
+  const { roll_no, new_password, confirm_password } = req.body;
+  
+  // 1. Basic Validation
+  if (!roll_no || !new_password || !confirm_password) {
+    return res.status(400).json({ success: false, message: "All fields are required." });
+  }
+
+  if (new_password !== confirm_password) {
+    return res.status(400).json({ success: false, message: "New passwords do not match." });
+  }
+
+  // 2. Server-side Logic
+  try {
+    // Check if the user (roll_no) exists in the database
+    const [users] = await db.query("SELECT id FROM users WHERE roll_no = ?", [roll_no]);
+    
+    if (users.length === 0) {
+      console.log(`PASS-RESET FAIL: Roll number ${roll_no} not found.`);
+      return res.status(404).json({ success: false, message: "Roll number not found." });
+    }
+
+    // Hash the new password before updating
+    const hashedPassword = await bcrypt.hash(new_password, 10);
+
+    // Update the password in the database
+    const [result] = await db.query(
+      "UPDATE users SET password = ? WHERE roll_no = ?",
+      [hashedPassword, roll_no]
+    );
+
+    if (result.affectedRows === 1) {
+      console.log(`PASS-RESET SUCCESS: Password reset for Roll No: ${roll_no}`);
+      res.json({ success: true, message: "Password reset successfully. You can now log in." });
+    } else {
+      console.error(`PASS-RESET FAIL: Database update affected 0 rows for ${roll_no}.`);
+      res.status(500).json({ success: false, message: "Password reset failed on the server." });
+    }
+
+  } catch (err) {
+    // 3. CRITICAL ERROR LOGGING
+    // This will print the actual database error to your terminal
+    console.error("PASS-RESET CRITICAL ERROR:", err.message);
+    res.status(500).json({ success: false, message: "Server error: Could not process request." });
+  }
+});
 
 // ------------------ Student Dashboard ------------------
 // MODIFIED: Added setNoCache middleware
@@ -228,6 +275,37 @@ app.get("/student-dashboard", setNoCache, (req, res) => {
   }
   res.sendFile(path.join(__dirname, "public", "dashboard.html"));
 });
+// ================== STUDENT DASHBOARD DETAILS API ==================
+// Add this route to your server.js file
+app.get('/api/student/details', checkStudent, async (req, res) => { 
+    try {
+        // FIXED: correct session user id
+        const userId = req.session.user.id; 
+        
+        const [users] = await db.query(
+            "SELECT full_name, roll_no, room_no, hostel_name FROM users WHERE id = ?", 
+            [userId]
+        );
+
+        if (users.length > 0) {
+            const user = users[0];
+            res.json({ 
+                success: true, 
+                name: user.full_name, 
+                roll: user.roll_no,
+                room: user.room_no,
+                hostel: user.hostel_name
+            });
+        } else {
+            res.status(404).json({ success: false, message: 'User data not found.' });
+        }
+    } catch (error) {
+        console.error('DASHBOARD DETAILS FETCH ERROR:', error);
+        res.status(500).json({ success: false, message: 'Server error loading details.' });
+    }
+});
+
+
 
 // ------------------ Student Profile ------------------
 app.get("/student/profile", async (req, res) => {
