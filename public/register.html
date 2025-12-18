@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>User Registration</title>
@@ -17,9 +20,24 @@
     button{background:#4a6fc7;color:white;border:none;padding:12px;width:100%;border-radius:5px;font-weight:bold;cursor:pointer;}
     button:hover{background:#3b5aa6;}
     .login-link{text-align:center;margin-top:10px;}
+    #session-timer-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: #f8d7da; /* Light Red/Warning Color */
+    color: #721c24; /* Dark Red Text */
+    text-align: center;
+    padding: 5px 0;
+    font-weight: bold;
+    z-index: 10000; /* Ensure it is above all other content */
+    display: none; /* Initially hidden */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
   </style>
 </head>
 <body>
+  <div id="session-timer-bar"></div>
   <div class="container">
     <div class="header"><h2>User Registration</h2></div>
     <div class="form-container">
@@ -57,6 +75,92 @@
   </div>
 
   <script>
+
+    const SESSION_TIMEOUT_MS = 1000 * 60 * 15; // 15 minutes (Must match server.js maxAge)
+        const WARNING_TIME_MS = 1000 * 60 * 2;   // Show warning 2 minutes before timeout
+        
+        let timerInterval;
+        let expirationTime = Date.now() + SESSION_TIMEOUT_MS;
+
+        // Simple throttle function (prevents flooding the server with requests)
+        function throttle(func, delay) {
+            let lastCall = 0;
+            return function(...args) {
+                const now = Date.now();
+                if (now - lastCall > delay) {
+                    lastCall = now;
+                    func.apply(this, args);
+                }
+            };
+        }
+
+        async function resetSessionActivity() {
+            try {
+                // Hitting the server to keep the session alive
+                const response = await fetch('/keep-alive', { method: 'POST' });
+
+                if (response.ok) {
+                    // Update the client-side expiration time
+                    expirationTime = Date.now() + SESSION_TIMEOUT_MS;
+                    
+                    // Restart the timer to reflect the new expiration time
+                    startSessionTimer();
+                    
+                    // Hide the bar if we were in the warning zone
+                    document.getElementById('session-timer-bar').style.display = 'none';
+                }
+            } catch(e) {
+                console.error("Keep-alive failed, session may be invalid:", e);
+            }
+        }
+        
+        function startSessionTimer() {
+            const timerElement = document.getElementById('session-timer-bar');
+            if (!timerElement) return;
+
+            if (timerInterval) clearInterval(timerInterval);
+
+            timerInterval = setInterval(() => {
+                const remainingTimeMS = expirationTime - Date.now();
+                
+                if (remainingTimeMS <= 0) {
+                    clearInterval(timerInterval);
+                    timerElement.textContent = "Session Expired. Redirecting to Login...";
+                    // Force client logout and redirect with an error message
+                    window.location.href = "/logout?error=" + encodeURIComponent("Your session has expired due to inactivity.");
+                    return;
+                }
+
+                // Show the timer only when it enters the warning zone
+                if (remainingTimeMS <= WARNING_TIME_MS) {
+                    const remainingMinutes = Math.floor(remainingTimeMS / (1000 * 60));
+                    const remainingSeconds = Math.floor((remainingTimeMS % (1000 * 60)) / 1000);
+                    timerElement.style.display = 'block';
+                    timerElement.textContent = `⚠️ Session expires in ${remainingMinutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+                } else {
+                    timerElement.style.display = 'none';
+                }
+
+            }, 1000); // Check every second
+        }
+        
+        function setupActivityListeners() {
+            ['mousemove', 'keydown', 'scroll', 'touchstart'].forEach(eventType => {
+                document.addEventListener(eventType, throttle(resetSessionActivity, 60000)); // Throttle to once per minute
+            });
+        }
+
+        // Initialize the timer logic
+        document.addEventListener('DOMContentLoaded', () => {
+            // Start the timer
+            startSessionTimer();
+            // Setup listeners to reset the timer on activity
+            setupActivityListeners();
+        });
+
+        // =========================================================
+        // === END OF SESSION TIMER SCRIPT ===
+        // ========================================================
     document.getElementById("registerForm").addEventListener("submit", async function(e) {
       e.preventDefault();
 

@@ -100,6 +100,48 @@ h2 {
   color: red;
 }
 
+#notification {
+  display: none; /* Initially hidden */
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #ffc107; /* Warning yellow for alerts */
+  color: #333;
+  padding: 15px 20px; /* Slightly reduced vertical padding */
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  border-left: 5px solid #dc3545; /* Red stripe for high importance */
+  
+  /* === NEW CSS FOR SIZING === */
+  max-width: 350px; /* Constrains the width to a comfortable pop-up size */
+  width: auto; /* Allows the box to shrink to content if less than max-width */
+  text-align: left; /* Ensures text aligns neatly */
+  /* ========================== */
+}
+
+#notification-message {
+  /* Ensures the message doesn't overflow and maintains a small font size */
+  font-size: 14px; 
+  line-height: 1.4;
+  word-wrap: break-word; /* Forces long words to wrap to the next line */
+  display: inline-block; /* Helps contain the text width */
+  padding-right: 10px; /* Space before the close button */
+}
+
+#notification .close-btn {
+  background: none;
+  border: none;
+  color: #333;
+  font-size: 16px;
+  cursor: pointer;
+  /* Removed margin-left to snug it closer to the text */
+  position: absolute; /* Positions the button independently */
+  top: 8px;
+  right: 8px;
+  padding: 5px; /* Makes the click target bigger */
+}
+
 
   /* Tables */
   table { width:100%; border-collapse:collapse; margin-top:20px; }
@@ -194,28 +236,100 @@ h2 {
 <main>
   <h2>Welcome, Admin!</h2>
   <p>Select an option from the menu above to manage hostel data.</p>
-</main>
-
 <!-- Notification Popup -->
 <div id="notification">
   <span id="notification-message">You have a new alert!</span>
-  <button class="close-btn" onclick="closeNotification()">×</button>
+  <button class="close-btn" onclick="closeNotification()">&#10005;</button>
 </div>
+</main>
+
+
 
 <footer>
   &copy; 2025 Hostel Management
 </footer>
 
 <script>
-  (function () {
-    window.addEventListener('pageshow', function (event) {
-      if (event.persisted) {
-        window.location.href = '/';
-      }
+    let currentNotificationId = null; 
+
+    // Function to close the current notification and mark it as read
+    async function closeNotification() {
+        const notificationElement = document.getElementById("notification");
+        notificationElement.style.display = "none";
+
+        if (currentNotificationId) {
+            try {
+                // Mark the notification as read on the server
+                await fetch(`/api/notifications/mark-read/${currentNotificationId}`, { method: 'POST' });
+                currentNotificationId = null; // Clear ID after successful marking
+            } catch (error) {
+                console.error("Failed to mark notification as read:", error);
+            }
+        }
+    }
+
+    // Function to poll the server for new notifications AND check session status
+    async function checkForNewAlerts() {
+        // Only poll if no notification is currently showing
+        if(currentNotificationId !== null) return; 
+
+        try {
+            const res = await fetch("/api/notifications/admin");
+            
+            // CRITICAL SESSION CHECK: If session is gone, the server middleware 
+            // will return a non-200 status (e.g., 403 Forbidden or 401 Unauthorized).
+            if (!res.ok) { 
+                console.warn("Admin session expired on server. Redirecting to login.");
+                window.location.href = "/"; // Redirect to the login page (root)
+                return; // Stop function execution
+            }
+
+            const data = await res.json();
+
+            if (data.success && data.notifications.length > 0) {
+                const latestAlert = data.notifications[0];
+                
+                // Set the global ID to prevent continuous polling and re-display
+                currentNotificationId = latestAlert.notification_id;
+
+                const notificationElement = document.getElementById("notification");
+                const messageElement = document.getElementById("notification-message");
+
+                messageElement.innerHTML = `<strong>${latestAlert.title}:</strong> ${latestAlert.message}`;
+                
+                // Change style based on alert type
+                if (latestAlert.alert_type === 'Security') {
+                    notificationElement.style.backgroundColor = '#dc3545'; // Red background for security
+                    notificationElement.style.color = 'white';
+                    notificationElement.style.borderLeft = '5px solid #f8d7da';
+                } else {
+                    // Default for General/Complaint
+                    notificationElement.style.backgroundColor = '#ffc107'; 
+                    notificationElement.style.color = '#333';
+                    notificationElement.style.borderLeft = '5px solid #dc3545';
+                }
+
+                notificationElement.style.display = "block"; // Show the pop-up
+            }
+        } catch (error) {
+            console.error("Error fetching admin notifications:", error);
+        }
+    }
+
+    // Start polling immediately and every 10 seconds thereafter
+    document.addEventListener("DOMContentLoaded", () => {
+        checkForNewAlerts(); // Initial check
+        setInterval(checkForNewAlerts, 10000); // Poll every 10 seconds (adjust as needed)
     });
-  })();
 
-
+    // CRITICAL FIX: The Back-Button Killer (Now calling the session check function)
+    window.addEventListener('pageshow', function (event) {
+        if (event.persisted) {
+            console.log("Admin Dashboard restored from cache. Forcing session check.");
+            // This runs the full check, which redirects if the session is dead on the server.
+            checkForNewAlerts();
+        }
+    });
 </script>
 
 </body>
